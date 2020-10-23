@@ -1,0 +1,14 @@
+torch>=1.5.0
+torchvision
+numpy
+tensorboardX
+scikit_image
+matplotlib
+tqdm
+easydict
+Pillow
+skimage
+opencv_python
+pycocotools
+addict
+thop
