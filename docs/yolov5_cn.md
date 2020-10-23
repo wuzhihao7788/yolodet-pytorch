@@ -14,14 +14,14 @@ Yolov5在结构上和YOLOv4很像，不同点在于他的配置更灵活，可�
 ## 网络结构和特点
 #### 网络结构
 <div align="center">
-  <img src="./images/yolov5.png" width=500 />
+  <img src="./imgs/yolov5.png" width=500 />
 </div>
 
 #### 网络细节
 采用[Netron](https://github.com/lutzroeder/Netron)可视化yolov5x模型结构
 
 <div align="center">
-  <img src="./images/yolov5x-detail.png" width=500/>
+  <img src="./imgs/yolov5x-detail.png" width=500/>
 </div>
 
 #### YOLOv5特点及技巧点：
