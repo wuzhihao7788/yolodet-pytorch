@@ -16,7 +16,7 @@
 - Verified many SOTA deep learning target detection training techniques in recent years.
 - Modified many SOTA methods to make them more efficient for single GPU training, such as CBN, PAN, SAM, etc.
 
-## Network structure and characteristics
+## Network Structure and Features
 #### Network structure
 <div align="center">
   <img src="./images/yolov4.png"/>
