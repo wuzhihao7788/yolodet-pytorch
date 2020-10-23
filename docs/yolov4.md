@@ -23,8 +23,7 @@
 </div>
 
 #### Network details
-采用[Netron](https://github.com/lutzroeder/Netron)可视化YOLOv4模型结构
-点击【[这里](./images/yolov4-detail.png)】查看细节
+
 Use [Netron](https://github.com/lutzroeder/Netron) to visualize the YOLOv4 model structure. Click【[here](./images/yolov4-detail.png)】 for details
 
 
