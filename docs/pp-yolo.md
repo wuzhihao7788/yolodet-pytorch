@@ -5,13 +5,13 @@
 ## Content
 - [Introduction](#Introduction)
 - [Network Structure and Features](#Network-Structure-and-Features)
-- [Different Points](#Different-Points)
+- [Difference](#Difference)
 - [How To Use](#How-To-Use)
 
 ## Introduction
 
 [PP-YOLO](https://arxiv.org/abs/2007.12099) is a model of YOLOv3 optimized and improved by Baidu AI. The accuracy (COCO data set mAP) and reasoning speed given by Baidu are better than [YOLOv4] (https://arxiv.org/abs/2004.10934) model. [COCO](http://cocodataset.org) The accuracy of the test-dev2017 data set is 45.9%. The inference speed of FP32 is 72.9 FPS on the single card V100, and the inference speed of FP16 is 155.6 FPS when TensorRT is turned on on the V100.
-## Network structure and characteristics
+## Network Structure and Features
 #### Network structure
 <div align="center">
   <img src="./images/pp-yolo.png"/>
@@ -30,7 +30,7 @@
 - Better pre-training model (knowledge distillation)
 - Additional description of IOU_Aware_Loss loss function. In the original YOLO series, the confidence score is the classification probability multiplied by the target object score. The accuracy of the positioning of the detection frame is not considered. The loss value is used to measure the accuracy of the detection frame positioning.
 
-## difference
+## Difference
 - The ResNet50 used by Baidu adopts the ResNet-D branch structure. The pre-training model I used is officially provided by pytorch, and the structure is the branch structure of ResNet-B. Baidu's ResNet50vd pre-training model uses knowledge distillation, and the accuracy is better than the official pytorch model.
 - C5->P5(input:512,ouput:512), C4->P4(input:512,ouput:256), C3->P3(input:256,ouput:128) in the paper. In the actual code implementation, because the ResNet output is [512,1024,2048], the actual code implementation is C5->P5(input:2048,ouput:512), C4->P4(input:1024,ouput:256), C3->P3(input:512,ouput:128).
 - The position of C5-->P5 DropBlock in the latest paddle code implementation is inconsistent with the position given in the paper. In the paper, Drop Block is used in the first Conv Block, but the actual code is to use Drop Block in the second Conv Block. By default, we are consistent with the paddle code implementation. You can modify the PFPPN configuration item of neck and set `second_drop_block=False` to keep it consistent with the original paper.
