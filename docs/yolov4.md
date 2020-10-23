@@ -36,7 +36,7 @@
 - Mosaic
 - Label Smooth
 
-## Training skills
+## Training Skills
 - [Exponential Moving Average](https://www.tensorflow.org/api_docs/python/tf/train/ExponentialMovingAverage)
 - Warm up
 - Gradient shear
