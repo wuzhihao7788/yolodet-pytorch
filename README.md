@@ -53,7 +53,7 @@ YOLODet-PyTorch is an end-to-end object detector development kit based on the py
 - RandomTranslation
 - Normalize
 - ImageToTensor
-- Please refer to [[here](docs/TRANSFORMS_cn.md)] for related configuration instructions
+- Please refer to [[here](docs/TRANSFORMS.md)] for related configuration instructions
 
 ### Loss function support:
 
