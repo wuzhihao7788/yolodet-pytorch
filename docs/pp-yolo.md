@@ -4,9 +4,9 @@
 
 ## Content
 - [Introduction](#Introduction)
-- [Network Structure and Features](#Network_Structure_and_Features)
-- [Different Points](#Different_Points)
-- [How To Use](#How_to_use)
+- [Network Structure and Features](#Network-Structure-and-Features)
+- [Different Points](#Different-Points)
+- [How To Use](#How-To-Use)
 
 ## Introduction
 
