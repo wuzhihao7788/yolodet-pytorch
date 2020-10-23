@@ -19,15 +19,12 @@
 ## 网络结构和特点
 #### 网络结构
 <div align="center">
-  <img src="./images/yolov4.png" width=500 />
+  <img src="./images/yolov4.png" />
 </div>
 
 #### 网络细节
-采用[Netron](https://github.com/lutzroeder/Netron)可视化
-
-<div align="center">
-  <img src="./images/yolov4-detail.png" width=500/>
-</div>
+采用[Netron](https://github.com/lutzroeder/Netron)可视化YOLOv4模型结构
+点击【[这里](./images/yolov4-detail.png)】查看细节
 
 #### YOLOv4特点：
 - 骨干网络: CSPDarknet53
