@@ -6,7 +6,7 @@ YOLODet-PyTorch is an end-to-end object detector development kit based on the py
 
 ## Content
 - [Introduction](#Introduction)
-- [Installation Instructions](#Installation-Instructions)
+- [Installation Notes](#Installation-Notes)
 - [Quick Start](#Quick-Start)
 - [Important](#Important)
 - [Thanks](#Thanks)
