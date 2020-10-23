@@ -14,7 +14,7 @@
 ## Network structure and characteristics
 #### Network structure
 <div align="center">
-  <img src="./images/pp-yolo.png" width=500 />
+  <img src="./images/pp-yolo.png"/>
 </div>
 
 #### PP-YOLO features:
