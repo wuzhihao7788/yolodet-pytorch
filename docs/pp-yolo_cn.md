@@ -14,7 +14,7 @@
 ## 网络结构和特点
 #### 网络结构
 <div align="center">
-  <img src="./images/pp-yolo.png" width=500 />
+  <img src="./images/pp-yolo.png" />
 </div>
 
 #### PP-YOLO特点：
