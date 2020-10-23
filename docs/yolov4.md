@@ -19,15 +19,13 @@
 ## Network structure and characteristics
 #### Network structure
 <div align="center">
-  <img src="./images/yolov4.png" width=500 />
+  <img src="./images/yolov4.png"/>
 </div>
 
 #### Network details
-Visualize using [Netron](https://github.com/lutzroeder/Netron)
+采用[Netron](https://github.com/lutzroeder/Netron)可视化YOLOv4模型结构
+点击【[这里](./images/yolov4-detail.png)】查看细节
 
-<div align="center">
-  <img src="./images/yolov4-detail.png" width=500/>
-</div>
 
 #### YOLOv4 features:
 - Backbone network: CSPDarknet53
