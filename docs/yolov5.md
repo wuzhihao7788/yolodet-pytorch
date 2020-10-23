@@ -4,25 +4,23 @@
 
 ## Content
 - [Introduction](#Introduction)
-- [Network Structure and Features](#Network_Structure_and_Features)
-- [Training Skills](#Training_Skills)
-- [How To Use](#How_To_Use)
+- [Network Structure and Features](#Network-Structure-and-Features)
+- [Training Skills](#Training-Skills)
+- [How To Use](#How-To-Use)
 
 ## Introduction
 
 Yolov5 is very similar in structure to YOLOv4. The difference is that its configuration is more flexible, and the depth and breadth of the network can be easily configured. A total of 4 versions of the network are given, namely **Yolov5s, Yolov5m, Yolov5l, Yolov5x** The structure of each model is different in the depth (number of blocks) and width (number of channels) of the BottleneckCSP module, which can meet the configuration model of the machine. This design structure is very similar to Google’s EfficientNet, and the depth of the network is also considered. The impact of breadth and resolution on the model.
-## Network structure and characteristics
+## Network Structure and Features
 #### Network structure
 <div align="center">
-  <img src="./images/yolov5.png" width=500 />
+  <img src="./images/yolov5.png"  />
 </div>
 
 #### Network details
-Use [Netron](https://github.com/lutzroeder/Netron) to visualize the yolov5x model structure
 
-<div align="center">
-  <img src="./images/yolov5x-detail.png" width=500/>
-</div>
+Use [Netron](https://github.com/lutzroeder/Netron) to visualize the yolov5x model structure. Click【[here](./images/yolov5x-detail.png)】 for details
+
 
 #### YOLOv5 features and skills:
 - Backbone network: Focus structure, CSP structure
@@ -37,7 +35,7 @@ Use [Netron](https://github.com/lutzroeder/Netron) to visualize the yolov5x mode
 - Focal Loss
 - Custom positive sample
 
-## Training skills
+## Training Skills
 - [Exponential Moving Average](https://www.tensorflow.org/api_docs/python/tf/train/ExponentialMovingAverage)
 - Warm up
 - Gradient shear
