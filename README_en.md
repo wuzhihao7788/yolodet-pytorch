@@ -8,6 +8,7 @@ YOLODet-PyTorch is an end-to-end object detector development kit based on the py
 - [Introduction](#Introduction)
 - [Installation](#Installation)
 - [Quick Start](#Quick-Start)
+- [Pretraining Model](#Pretraining-Model)
 - [Important](#Important)
 - [Thanks](#Thanks)
 - [How To Contribute Code](#How-To-Contribute-Code)
@@ -114,9 +115,10 @@ Please refer to [INSTALL.md](docs/INSTALL.md) for installation and data set prep
 Please refer to [GETTING_STARTED.md](docs/GETTING_STARTED.md) for basic usage of YOLODet.
 
 ## Pretraining Model
-Due to my limited resources, only 1080Ti video CARDS are available for training, and the training cycle is long after the complete training.To illustrate this framework is trainable, inferential, and testable.The pre-training model given in this paper is only the model of 12 EPOchs trained, and the loss value is still declining, which has not been fully trained, so it is only for your reference.Developers with the right conditions can complete this training, and I hope you can train the good pre-training model to provide, for everyone to use.I will also make a statement and thank you in an important place.Without further details, please click 【[here](doc/MODEL_ZOO.md)】 to view the pre-training model.
 
-## important
+Due to my limited resources, only 1080Ti video CARDS are available for training, and the training cycle is long after the complete training.To illustrate this framework is trainable, inferential, and testable.The pre-training model given in this paper is only the model of 12 EPOchs trained, and the loss value is still declining, which has not been fully trained, so it is only for your reference.Developers with the right conditions can complete this training, and I hope you can train the good pre-training model to provide, for everyone to use.I will also make a statement and thank you in an important place.Without further details, please click 【[here](docs/MODEL_ZOO.md)】 to view the pre-training model.
+
+## Important
 Because the detection framework is in my spare time and I am passionate about deep learning, I wrote it alone, and because I am shy in my pocket and do not have sufficient graphics card resources, the pre-training model of MSCOCO's large data set is temporarily not provided. There will be opportunities later A pre-trained model will be provided, so please look forward to it. I have tested and verified the small data set, and used the model trained by this framework in actual projects. There is no problem, and the accuracy and speed can be guaranteed.
 
 ## Thanks
