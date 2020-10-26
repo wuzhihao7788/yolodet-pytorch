@@ -6,11 +6,11 @@ YOLODet-PyTorch is an end-to-end object detector development kit based on the py
 
 ## Content
 - [Introduction](#Introduction)
-- [Installation Instructions](#Installation_Instructions)
-- [Quick Start](#Quick_Start)
-- [Important Note](#Important_Note)
+- [Installation](#Installation)
+- [Quick Start](#Quick-Start)
+- [Important](#Important)
 - [Thanks](#Thanks)
-- [How to contribute code](#How_to_contribute_code)
+- [How To Contribute Code](#How-To-Contribute-Code)
 
 ## Introduction
 
@@ -104,7 +104,7 @@ yolodet-pytorch
 │ │ ├──utils        #All tools and methods gathering place
 ```
 
-## Installation Notes
+## Installation
 
 Please refer to [INSTALL.md](docs/INSTALL.md) for installation and data set preparation.
 
@@ -132,5 +132,5 @@ Because the detection framework is in my spare time and I am passionate about de
 
 ## How To Contribute Code
 
-You are welcome to provide the code for YOLODet and your feedback is greatly appreciated.I will constantly improve and improve the target detection framework of the full series of YOLO based on PyTorch, and I hope more like-minded enthusiasts and practitioners can participate in and jointly maintain this project.
+You are welcome to provide the code for YOLODet and your feedback is greatly appreciated.I will constantly improve and improve the object detection framework of the full series of YOLO based on PyTorch, and I hope more like-minded enthusiasts and practitioners can participate in and jointly maintain this project.
 If you are interested in this, please contact my Gmail address :wuzhihao7788@gmail.com. I look forward to working with you to improve and make progress.
