@@ -116,7 +116,7 @@ Please refer to [GETTING_STARTED.md](docs/GETTING_STARTED.md) for basic usage of
 
 ## Pretraining Model
 
-Due to my limited resources, only 1080Ti video CARDS are available for training, and the training cycle is long after the complete training.To illustrate this framework is trainable, inferential, and testable.The pre-training model given in this paper is only the model of 12 EPOchs trained, and the loss value is still declining, which has not been fully trained, so it is only for your reference.Developers with the right conditions can complete this training, and I hope you can train the good pre-training model to provide, for everyone to use.I will also make a statement and thank you in an important place.Without further details, please click 【[here](docs/MODEL_ZOO.md)】 to view the pre-training model.
+Please click 【[here](docs/MODEL_ZOO.md)】 to view the pre-training model.
 
 ## Important
 Due to the testing framework for personal leisure, in the love of deep learning, written by herself, but also because their cash-strapped, do not have enough graphics resources, provide the MSCOCO large data sets of training model for the complete training model, behind will provide a complete version of the training model of the hall, please look forward to.For the model with small data sets that I have tested and verified and that I have used the framework to train in the actual project, there is no problem, and the accuracy and speed can be guaranteed.
