@@ -24,6 +24,8 @@
 import math
 import random
 from collections import OrderedDict
+
+from yolodet.models.utils.torch_utils import select_device
 from yolodet.utils.Logger import Logging
 import torch.nn.functional as F
 
@@ -127,13 +129,13 @@ def train_detector(model,dataset,cfg,validate=False,timestamp=None,meta=None):
     data_loaders = [
         build_dataloader(ds,data=cfg.data) for ds in dataset
     ]
-    if torch.cuda.is_available():
-        model = model.cuda(cfg.gpu_ids[0])
-        model.device = cfg.gpu_ids[0]
-        if torch.cuda.device_count() > 1:
-            model = DataParallel(model, device_ids=cfg.gpu_ids)
-    else:
-        model.device = 'cpu'
+
+    device = select_device(cfg.device)
+
+    model = model.cuda(device)
+    model.device = device
+    if device.type != 'cpu' and torch.cuda.device_count() > 1:
+        model = torch.nn.DataParallel(model)
 
     # build runner
     optimizer = cfg.optimizer

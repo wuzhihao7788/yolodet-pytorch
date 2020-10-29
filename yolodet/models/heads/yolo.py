@@ -189,7 +189,10 @@ class BaseHead(nn.Module,metaclass=ABCMeta):
             return 1.0 - 0.5 * eps, 0.5 * eps
 
         # class label smoothing https://arxiv.org/pdf/1902.04103.pdf eqn 3
-        cp, cn = smooth_BCE(eps=0.0)
+        eps = 0
+        if self.label_smooth and self.deta>0:
+            eps = self.deta
+        cp, cn = smooth_BCE(eps=eps)
 
         # per output
         nt = 0  # number of targets
@@ -230,16 +233,19 @@ class BaseHead(nn.Module,metaclass=ABCMeta):
             return self.get_yolov4_eval_bboxes(x)
 
     def get_det_bboxes(self, x, img_metas,kwargs):
-        pred = self.get_eval_bboxes(x)[0]
-        return self.get_nms_result(img_metas, kwargs, pred)
+        # pred = self.get_eval_bboxes(x)[0]
+        return self.get_nms_result(img_metas, kwargs, x)
 
     def get_nms_result(self, img_metas, kwargs, pred):
+
+        scores_thr,merge = 0.3,False
         if 'scores_thr' in kwargs.keys():
             scores_thr = kwargs['scores_thr']
-        else:
-            scores_thr = 0.3
+        if 'merge' in kwargs.keys():
+            merge = kwargs['merge']
+
         det_result = []
-        pred = non_max_suppression(pred, conf_thres=scores_thr, iou_thres=self.nms_thr)
+        pred = non_max_suppression(pred, conf_thres=scores_thr, iou_thres=self.nms_thr,merge=merge)
         ori_shape = img_metas['ori_shape']
         img_shape = img_metas['img_shape']
         for i, det in enumerate(pred):  # detections per image

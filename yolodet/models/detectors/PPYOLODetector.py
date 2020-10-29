@@ -99,14 +99,8 @@ class PPYOLODetector(BaseDetector):
         return losses
 
 
-    def forward_test(self, img, img_metas, **kwargs):
-        x = self.extract_feat(img)
-        head_outs = self.head(x)# y1,y2,y3
-
-        if 'eval' in kwargs and kwargs['eval']:
-            return self.head.get_eval_bboxes(head_outs)
-
-        head_det_inputs = [head_outs, img_metas,kwargs]
+    def forward_test(self, x, img_metas, **kwargs):
+        head_det_inputs = [x, img_metas,kwargs]
         result = self.head.get_det_bboxes(*head_det_inputs)
         return result
 
@@ -114,3 +108,8 @@ class PPYOLODetector(BaseDetector):
         x = self.extract_feat(img)
         head_outs = self.head(x)# y1,y2,y3
         return head_outs
+
+    def forward_eval(self, img, img_metas, **kwargs):
+        x = self.extract_feat(img)
+        head_outs = self.head(x)# y1,y2,y3
+        return self.head.get_eval_bboxes(head_outs)

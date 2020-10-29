@@ -24,7 +24,10 @@
 
 from abc import ABCMeta, abstractmethod
 
+import torch
 import torch.nn as nn
+
+from yolodet.models.utils.torch_utils import scale_img
 
 
 class BaseDetector(nn.Module,metaclass=ABCMeta):
@@ -51,7 +54,27 @@ class BaseDetector(nn.Module,metaclass=ABCMeta):
                 return self.forward_flops(img)
             return self.forward_train(img, img_metas, **kwargs)
         else:
-            return self.forward_test(img, img_metas, **kwargs)
+            if 'augment' in kwargs and kwargs['augment']:
+                img_size = img.shape[-2:]  # height, width
+                s = [0.83, 0.67]  # scales
+                y = []
+                for i, xi in enumerate((img,
+                                        scale_img(img.flip(3), s[0]),  # flip-lr and scale
+                                        scale_img(img, s[1]),  # scale
+                                        )):
+                    y.append(self.forward_eval(xi, img_metas, **kwargs)[0])
+
+                y[1][..., :4] /= s[0]  # scale
+                y[1][..., 0] = img_size[1] - y[1][..., 0]  # flip lr
+                y[2][..., :4] /= s[1]  # scale
+                if 'eval' in kwargs and kwargs['eval']:
+                    return torch.cat(y, 1), None  # augmented inference, train
+                else:
+                    return self.forward_test(torch.cat(y, 1), img_metas, **kwargs)
+            elif 'eval' in kwargs and kwargs['eval']:
+                return self.forward_eval(img,img_metas,**kwargs)
+
+            return self.forward_test(self.forward_eval(img,img_metas,**kwargs)[0], img_metas, **kwargs)
 
     @abstractmethod
     def forward_train(self, img, img_metas, **kwargs):
@@ -60,6 +83,11 @@ class BaseDetector(nn.Module,metaclass=ABCMeta):
     @abstractmethod
     def forward_test(self, img, img_metas, **kwargs):
         pass
+
+    @abstractmethod
+    def forward_eval(self, img, img_metas, **kwargs):
+        pass
+
 
     @abstractmethod
     def forward_flops(self, img):

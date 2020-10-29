@@ -53,9 +53,7 @@ def parse_args():
         '--validate',
         action='store_true',
         help='whether to evaluate the checkpoint during training')
-    group_gpus = parser.add_mutually_exclusive_group()
-    group_gpus.add_argument('--gpus',type=int,help='number of gpus to use ')
-    group_gpus.add_argument('--gpu-ids',type=int,nargs='+',help='ids of gpus to use')
+    parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--seed', type=int, default=None, help='random seed')
     parser.add_argument('--deterministic',action='store_true',help='whether to set deterministic options for CUDNN backend.')
     parser.add_argument('--autoscale-lr',action='store_true',help='automatically scale lr with the number of gpus')
@@ -76,10 +74,10 @@ def main():
         cfg.work_dir = args.work_dir
     if args.resume_from is not None:
         cfg.resume_from = args.resume_from
-    if args.gpu_ids is not None:
-        cfg.gpu_ids = args.gpu_ids
+    if args.device is not None:
+        cfg.device = args.device
     else:
-        cfg.gpu_ids = range(1) if args.gpus is None else range(args.gpus)
+        cfg.device = None
 
     if args.autoscale_lr:
         # apply the linear scaling rule (https://arxiv.org/abs/1706.02677)

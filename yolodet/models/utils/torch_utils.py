@@ -22,11 +22,12 @@
                   ┗┻┛  ┗┻┛
 =================================================='''
 import math
+import os
 import time
 
 import torch
 from copy import deepcopy
-
+import torch.nn.functional as F
 
 def make_divisible(x, divisor):
     # Returns x evenly divisble by divisor
@@ -180,3 +181,25 @@ def model_info(model, verbose=True):
         fs = ''
 
     print('Input size(640, 640),Model Summary: %g layers, %g parameters, %g gradients%s' % (len(list(model.parameters())), n_p, n_g, fs))
+
+def select_device(device=''):
+    # device = 'cpu' or '0' or '0,1,2,3'
+    cpu_request = device.lower() == 'cpu'
+    if device and not cpu_request:  # if device requested other than 'cpu'
+        os.environ['CUDA_VISIBLE_DEVICES'] = device  # set environment variable
+        assert torch.cuda.is_available(), 'CUDA unavailable, invalid device %s requested' % device  # check availablity
+
+    cuda = False if cpu_request else torch.cuda.is_available()
+
+    print('')  # skip a line
+    return torch.device('cuda:0' if cuda else 'cpu')
+
+def scale_img(img, ratio=1.0, same_shape=False):  # img(16,3,256,416), r=ratio
+    # scales img(bs,3,y,x) by ratio
+    h, w = img.shape[2:]
+    s = (int(h * ratio), int(w * ratio))  # new size
+    img = F.interpolate(img, size=s, mode='bilinear', align_corners=False)  # resize
+    if not same_shape:  # pad/crop img
+        gs = 32  # (pixels) grid size
+        h, w = [math.ceil(x * ratio / gs) * gs for x in (h, w)]
+    return F.pad(img, [0, w - s[1], 0, h - s[0]], value=0.447)  # value = imagenet mean
