@@ -84,6 +84,7 @@ YOLODet-PyTorch是端到端基于pytorch框架复现yolo最新算法的目标检
 - [x] **FPN-PAN**
 - [x] **coord conv**
 - [x] **drop block**
+- [x] **SAM**
 
 
 ### 代码结构说明
