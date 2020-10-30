@@ -31,7 +31,7 @@ import os
 current_directory = os.path.dirname(os.path.abspath(__file__))
 root_path = os.path.abspath(os.path.dirname(current_directory) + os.path.sep + ".")
 sys.path.append(root_path)
-os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+# os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import torch
 from yolodet.utils.config import Config
 from tools import file_utils
@@ -40,6 +40,7 @@ from yolodet.utils.collect_env import collect_env
 from yolodet.utils.newInstance_utils import build_from_dict
 from yolodet.utils.registry import DETECTORS,DATASET
 from yolodet.apis.train import set_random_seed,train_detector
+from yolodet.models.utils.torch_utils import select_device
 
 
 
@@ -78,7 +79,7 @@ def main():
         cfg.device = args.device
     else:
         cfg.device = None
-
+    device = select_device(cfg.device)
     if args.autoscale_lr:
         # apply the linear scaling rule (https://arxiv.org/abs/1706.02677)
         cfg.optimizer['lr'] = cfg.optimizer['lr'] * len(cfg.gpu_ids) / 8
@@ -114,8 +115,13 @@ def main():
     cfg.seed = args.seed
     meta['seed'] = args.seed
     model = build_from_dict(cfg.model, DETECTORS)
-    # model = build_detector(
-    #     cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
+
+    model = model.cuda(device)
+    # model.device = device
+    if device.type != 'cpu' and torch.cuda.device_count() > 1:
+        model = torch.nn.DataParallel(model)
+
+    model.device = device
 
     datasets = [build_from_dict(cfg.data.train, DATASET)]
     if len(cfg.workflow) == 2:

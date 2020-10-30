@@ -93,9 +93,6 @@ if __name__ == '__main__':
 
     print(opt)
 
-    # config = '/disk2/project/mmdetection/mount/pytorch-YOLOv4/cfg/yolov5_coco_gpu.py'
-    # checkpoint = '/disk2/project/pytorch-YOLOv4/work_dirs/yolov5-l_epoch_24.pth'
-
     cfg = Config.fromfile(opt.config)
     cfg.data.val.train = False
     val_dataset = build_from_dict(cfg.data.val, DATASET)

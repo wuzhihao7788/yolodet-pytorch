@@ -31,13 +31,13 @@ from yolodet.models.utils.torch_utils import initialize_weights
 class PANet(nn.Module):
 
     # def __init__(self, in_channels = 1024,kernel_sizes = [5, 9, 13]):
-    def __init__(self, in_channels = [256,512,1024],kernel_sizes = [5, 9, 13],norm_type='BN',num_groups=None):
+    def __init__(self, in_channels = [256,512,1024],kernel_sizes = [5, 9, 13],norm_type='BN',num_groups=None,sam=False):
         super(PANet,self).__init__()
         self.spp = YOLO_SPP(in_channels[-1],kernel_sizes=kernel_sizes,norm_type=norm_type,num_groups=num_groups)# out_channels = 512
         self.upsample1 = UpSampleModule(in_channels[-2],norm_type=norm_type,num_groups=num_groups) # out_channels = 256
-        self.upsample2 = UpSampleModule(in_channels[-3],norm_type=norm_type,num_groups=num_groups) # out_channels = 128
-        self.downsample1 = DownSampleModule(in_channels[-2]//2,norm_type=norm_type,num_groups=num_groups)
-        self.downsample2 = DownSampleModule(in_channels[-3]//2,norm_type=norm_type,num_groups=num_groups)
+        self.upsample2 = UpSampleModule(in_channels[-3],norm_type=norm_type,num_groups=num_groups,sam=sam) # out_channels = 128
+        self.downsample1 = DownSampleModule(in_channels[-2]//2,norm_type=norm_type,num_groups=num_groups,sam=sam)
+        self.downsample2 = DownSampleModule(in_channels[-3]//2,norm_type=norm_type,num_groups=num_groups,sam=sam)
         #in_channels = 1024
         # self.spp = SPP(in_channels,kernel_sizes=kernel_sizes)# out_channels = 512
         # self.upsample1 = UpSampleModule(in_channels//2) # out_channels = 256

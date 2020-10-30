@@ -38,7 +38,7 @@ from yolodet.dataset.pipelines.compose import Compose
 import cv2
 from tools.file_utils import mkdir_or_exist
 import os.path as osp
-
+from yolodet.models.utils import torch_utils
 
 def init_detector(config, checkpoint=None, device='cuda:0'):
     """Initialize a detectors from config file.
@@ -124,8 +124,10 @@ def inference_detector(model, img,scores_thr=0.3,augment=False, half=False,merge
         model.half()  # to FP16
     # forward the model
     with torch.no_grad():
+        t1 = torch_utils.time_synchronized()
         result = model(return_loss=False, rescale=True, **data)
-    return result
+        t2 = torch_utils.time_synchronized()
+    return result ,t2 - t1
 
 
 def attempt_load(weights, map_location=None):

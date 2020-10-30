@@ -130,13 +130,6 @@ def train_detector(model,dataset,cfg,validate=False,timestamp=None,meta=None):
         build_dataloader(ds,data=cfg.data) for ds in dataset
     ]
 
-    device = select_device(cfg.device)
-
-    model = model.cuda(device)
-    model.device = device
-    if device.type != 'cpu' and torch.cuda.device_count() > 1:
-        model = torch.nn.DataParallel(model)
-
     # build runner
     optimizer = cfg.optimizer
 

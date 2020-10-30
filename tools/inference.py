@@ -52,12 +52,11 @@ def inference(config,checkpoint,img_path,device='cuda:0',half=False,augment=Fals
         imgs_paths = get_file_realpath(img_path, *[".jpg", ".JPG", ".jpeg", ".JPEG", ".png", ".PNG", ".bmp", ".BMP"])
         for i, img in enumerate(imgs_paths):
             basename = os.path.basename(img)
-            t1 = torch_utils.time_synchronized()
-            result = inference_detector(model, img=img, scores_thr=scores_thr,augment=augment, half=half,merge=merge)
-            t2 = torch_utils.time_synchronized()
+            result,t = inference_detector(model, img=img, scores_thr=scores_thr,augment=augment, half=half,merge=merge)
+
             #print(result)
             # Print time (inference + NMS)
-            print('%s Done , object num : %s .time:(%.3fs)' % (basename,len(result), t2 - t1))
+            print('%s Done , object num : %s .time:(%.3fs)' % (basename,len(result), t))
             show_result(img, result, model.CLASSES, show=show,save_json=save_json,save_file=save_file,out_path=save_path,file_name=basename)
 
     else:

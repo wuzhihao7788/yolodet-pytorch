@@ -46,6 +46,7 @@ class DarknetConv2D_Norm_Activation(nn.Module):
     def __init__(self,in_channels, out_channels, kernel_size=3, stride=1, activation='mish', norm_type='BN',num_groups=32, bias=False):
         super(DarknetConv2D_Norm_Activation, self).__init__()
         pad = (kernel_size-1)//2 # kernel size is 3 or 0
+        self.sigmoid = False
         assert norm_type in (None,'BN','GN'),'norm type just support BN or GN'
         self.norm_type = norm_type
         self.darknetConv = nn.ModuleList()
@@ -64,6 +65,8 @@ class DarknetConv2D_Norm_Activation(nn.Module):
             self.darknetConv.add_module('swish',Swish())
         elif activation == 'mish':
             self.darknetConv.add_module('mish',Mish())
+        elif activation == 'logistic':
+            self.darknetConv.add_module('logistic',torch.nn.Sigmoid())
         else:
             pass
 
