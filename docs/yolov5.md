@@ -51,25 +51,25 @@ Use [Netron](https://github.com/lutzroeder/Netron) to visualize the yolov5x mode
 
 Prepare the data set required for training by yourself, and specify the location of the data to be trained. For specific operations, please see 【[here](INSTALL.md)】. For data set preparation, you can check the relevant chapters of yolov4, click 【[here](yolov4.md)】 to get there quickly.
 
-### Use single GPU training
+
+### Use GPU training
 ```shell
 python tools/train.py ${CONFIG_FILE}
 ```
-${CONFIG_FILE} is the location of the YOLOv5 configuration file.
 If you want to specify the working directory in the command, you can add a parameter `--work_dir ${YOUR_WORK_DIR}`.
 
-### Use multiple GPU training
+### Use assign GPU training
 
 ```shell
-python tools/train.py ${CONFIG_FILE} --gpus ${GPU_NUM} [optional arguments]
+python tools/train.py ${CONFIG_FILE} --device ${device} [optional arguments]
 ```
 
 Optional parameters:
 
-- `--validate` (**strongly recommended**): every time k during the training epoch (the default value is 1, you can modify [this](../cfg/yolov5_coco_gpu.py#L138)) to execute Evaluation.
+- `--validate` (**strongly recommended**): every time k during the training epoch (the default value is 1, you can modify [this](../cfg/yolov4_coco_gpu.py#L138)) to execute Evaluation.
 
 - `--work_dir ${WORK_DIR}`: Overwrite the working directory specified in the configuration file.
-
+- `--device ${device}`: assign cuda device , 0 or 0,1,2,3 or cpu，use all by default。
 - `--resume_from ${CHECKPOINT_FILE}`: Resume training from the checkpoints file of previous training.
 - `--multi-scale`: Multi-scale scaling, the size range is +/- 50% of the training image size
 

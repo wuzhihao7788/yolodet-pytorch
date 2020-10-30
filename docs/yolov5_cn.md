@@ -50,24 +50,33 @@ Yolov5在结构上和YOLOv4很像，不同点在于他的配置更灵活，可�
 
 自行准备训练需要的数据集，指定需要训练的数据位置，具体操作请查看【[这里](INSTALL_cn.md)】。有关数据集准备，可查看yolov4相关章节，点击【[这里](yolov4_cn.md)】快速到达。
 
-### 使用单GPU训练
+
+### 使用GPU训练
 ```shell
 python tools/train.py ${CONFIG_FILE}
 ```
-${CONFIG_FILE}为YOLOv5的配置文件位置。
 如果您想在命令中指定工作目录，可以添加一个参数`--work_dir ${YOUR_WORK_DIR}`。
+例如采用YOLOv4训练模型:
+```shell
+python tools/train.py cfg/yolov4_coco_100e.py --device ${device} --validate
+```
 
-### 使用多gpu训练
+### 使用指定gpu训练
 
 ```shell
-python tools/train.py ${CONFIG_FILE} --gpus ${GPU_NUM} [optional arguments]
+python tools/train.py ${CONFIG_FILE} --device ${device} [optional arguments]
+```
+例如采用YOLOv4训练模型:
+```shell
+python tools/train.py cfg/yolov4_coco_100e.py --device 0,1,2 --validate
 ```
 
 可选参数:
 
-- `--validate`(**强烈建议**):在训练epoch期间每一次k(默认值是1，可以像这样修改[this](../cfg/yolov5_coco_gpu.py#L138))来执行评估。
+- `--validate`(**强烈建议**):在训练epoch期间每一次k(默认值是1，可以像这样修改[this](../cfg/yolov4_coco_gpu.py#L138))来执行评估。
 
 - `--work_dir ${WORK_DIR}`:覆盖配置文件中指定的工作目录。
+- `--device ${device}`: 指定device训练, 0 or 0,1,2,3 or cpu，默认全部使用。
 
 - `--resume_from ${CHECKPOINT_FILE}`:从以前训练的checkpoints文件恢复训练。
 - `--multi-scale`:多尺度缩放，尺寸范围为训练图片尺寸+/- 50%
@@ -76,6 +85,5 @@ python tools/train.py ${CONFIG_FILE} --gpus ${GPU_NUM} [optional arguments]
 
 `resume_from`加载模型权重和优化器状态，并且训练也从指定的检查点继续训练。它通常用于恢复意外中断的训练。
 `load_from`只加载模型权重，并且训练从epoch 0开始。它通常用于微调。
-
 
 

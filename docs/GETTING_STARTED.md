@@ -17,16 +17,16 @@ This is specified by `work_dir` in the configuration file.
 
 According to [Cosine Fighting Rules](https://arxiv.org/abs/1706.02677), if you use different GPUs or images of each GPU, you need to set a learning rate proportional to the batch size. `batch_size` and `subdivisions` are determined.
 
-### Use single GPU training
+### Use GPU training
 ```shell
 python tools/train.py ${CONFIG_FILE}
 ```
 If you want to specify the working directory in the command, you can add a parameter `--work_dir ${YOUR_WORK_DIR}`.
 
-### Use multiple GPU training
+### Use assign GPU training
 
 ```shell
-python tools/train.py ${CONFIG_FILE} --gpus ${GPU_NUM} [optional arguments]
+python tools/train.py ${CONFIG_FILE} --device ${device} [optional arguments]
 ```
 
 Optional parameters:
@@ -34,7 +34,7 @@ Optional parameters:
 - `--validate` (**strongly recommended**): every time k during the training epoch (the default value is 1, you can modify [this](../cfg/yolov4_coco_gpu.py#L138)) to execute Evaluation.
 
 - `--work_dir ${WORK_DIR}`: Overwrite the working directory specified in the configuration file.
-
+- `--device ${device}`: assign cuda device , 0 or 0,1,2,3 or cpu，use all by default。
 - `--resume_from ${CHECKPOINT_FILE}`: Resume training from the checkpoints file of previous training.
 - `--multi-scale`: Multi-scale scaling, the size range is +/- 50% of the training image size
 
@@ -59,15 +59,8 @@ model = init_detector(config_file, checkpoint_file, device='cuda:0')
 
 # test a single image and show the results
 img ='test.jpg' # or img = mmcv.imread(img), which will only load it once
-result = inference_detector(model, img)
+result,t = inference_detector(model, img)
+print('%s Done , object num : %s .time:(%.3fs)' % (img,len(result), t))
 # visualize the results in a new window
 show_result(img, result, model.CLASSES)
-# or save the visualization results to image files
-show_result(img, result, model.CLASSES, out_file='result.jpg')
-
-# test a video and show the results
-video = cv2.VideoCapture('video.mp4')
-for frame in video:
-    result = inference_detector(model, frame)
-    show_result(frame, result, model.CLASSES)
 ```
