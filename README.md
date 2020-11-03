@@ -18,7 +18,7 @@ YOLODet-PyTorch是端到端基于pytorch框架复现yolo最新算法的目标检
 
 - 模型丰富：
 
-  YOLODet提供了丰富的模型，涵盖最新YOLO检测框架的复现，涵盖YOLOv5、YOLOv4、PP-YOLO、YOLOv3等YOLO系列目标检测算法。
+  YOLODet提供了丰富的模型，涵盖最新YOLO检测算法的复现，包含YOLOv5、YOLOv4、PP-YOLO、YOLOv3等YOLO系列目标检测算法。
 
 - 高灵活度：
 
