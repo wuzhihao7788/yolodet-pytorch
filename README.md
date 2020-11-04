@@ -27,7 +27,7 @@ YOLODet-PyTorch是端到端基于pytorch框架复现yolo最新算法的目标检
 ### 支持的模型:
 
 - [YOLOv5(s,m,l,x)](docs/yolov5_cn.md)
-- [YOLOv4](docs/yolov4_cn.md) 
+- [YOLOv4(标准版，sam版)](docs/yolov4_cn.md) 
 - [PP-YOLO](docs/pp-yolo_cn.md)
 - [YOLOv3](docs/yolov3_cn.md)
 
