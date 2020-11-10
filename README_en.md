@@ -19,7 +19,7 @@ YOLODet-PyTorch is an end-to-end object detector development kit based on the py
 
 - Rich models:
 
-   YOLODet provides a wealth of models, covering the reproduction of the latest YOLO detection framework, covering YOLO series target detection algorithms such as YOLOv5, YOLOv4, PP-YOLO, YOLOv3, etc.
+   YOLODet provides a wealth of models, covering the reproduction of the latest YOLO detection algorithms, include YOLO series target detection algorithms such as YOLOv5, YOLOv4, PP-YOLO, YOLOv3, etc.
 
 - High flexibility:
 
@@ -27,8 +27,8 @@ YOLODet-PyTorch is an end-to-end object detector development kit based on the py
 
 ### Supported models:
 
-- [YOLOv5](docs/yolov5.md)
-- [YOLOv4](docs/yolov4.md)
+- [YOLOv5(s,m,l,x)](docs/yolov5.md)
+- [YOLOv4(standard,SAM)](docs/yolov4.md)
 - [PP-YOLO](docs/pp-yolo.md)
 - [YOLOv3](docs/yolov3.md)
 
