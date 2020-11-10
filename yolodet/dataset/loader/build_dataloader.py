@@ -83,6 +83,7 @@ def collate(batch):
         return None
     clt = defaultdict(list)
     for i,dic in enumerate(batch):
+        clt['idx'].append(torch.tensor(i))
         for k,v in dic.items():
             clt[k].append(v)
 
