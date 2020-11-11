@@ -53,8 +53,8 @@ class BaseDetector(nn.Module,metaclass=ABCMeta):
             idx = kwargs.pop('idx').cpu().numpy()
             img_metas = [img_metas[i] for i in idx]
             for k,v in kwargs.items():
-                kwargs[k] = [v[i] for i in idx]
-
+                if isinstance(v,list):
+                    kwargs[k] = [v[i] for i in idx]
         if return_loss:
             if img_metas is None or kwargs is None or not len(kwargs):
                 return self.forward_flops(img)
