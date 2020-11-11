@@ -54,7 +54,7 @@ def single_gpu_test(model, data_loader,half=False,conf_thres=0.001,iou_thres = 0
 
     seen = 0
     nc = model.head.num_classes
-    names = model.CLASSES if hasattr(model, 'CLASSES') else model.module.CLASSES
+    names = model.CLASSES if hasattr(model, 'CLASSES') else data_loader.dataset.CLASSES
     coco91class = coco80_to_coco91_class()
     s = ('%20s' + '%12s' * 6) % ('Class', 'Images', 'Targets', 'P', 'R', 'mAP@.5', 'mAP@.5:.95')
     p, r, f1, mp, mr, map50, map, t0, t1 = 0., 0., 0., 0., 0., 0., 0., 0., 0.
