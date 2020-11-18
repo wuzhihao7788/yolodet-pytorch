@@ -22,13 +22,14 @@
                   ┗┻┛  ┗┻┛
 =================================================='''
 import json
-from abc import ABCMeta,abstractmethod
+from abc import ABCMeta, abstractmethod
 from yolodet.hooks.hook import Hook
 import datetime
 import os.path as osp
 from collections import OrderedDict
 
 import torch
+
 
 class LoggerHook(Hook):
     """Base class for logger hooks.
@@ -84,6 +85,7 @@ class LoggerHook(Hook):
         if self.reset_flag:
             runner.log_buffer.clear_output()
 
+
 class TextLoggerHook(LoggerHook):
 
     def __init__(self, interval=10, ignore_last=True, reset_flag=False):
@@ -113,7 +115,7 @@ class TextLoggerHook(LoggerHook):
             if 'time' in log_dict.keys():
                 self.time_sec_tot += (log_dict['time'] * self.interval)
                 time_sec_avg = self.time_sec_tot / (
-                    runner.iter - self.start_iter + 1)
+                        runner.iter - self.start_iter + 1)
                 eta_sec = time_sec_avg * (runner.max_iters - runner.iter - 1)
                 eta_str = str(datetime.timedelta(seconds=int(eta_sec)))
                 log_str += 'eta: {}, '.format(eta_str)
@@ -129,8 +131,8 @@ class TextLoggerHook(LoggerHook):
             # TODO: resolve this hack
             # these items have been in log_str
             if name in [
-                    'mode', 'Epoch', 'iter', 'lr', 'time', 'data_time',
-                    'memory', 'epoch'
+                'mode', 'Epoch', 'iter', 'lr', 'time', 'data_time',
+                'memory', 'epoch'
             ]:
                 continue
             if isinstance(val, float):

@@ -28,12 +28,12 @@ import numpy as np
 
 from .hook import Hook
 
+
 class OptimizerHook(Hook):
 
-    def __init__(self, grad_clip=None,detect_anomaly=False):
+    def __init__(self, grad_clip=None, detect_anomaly=False):
         self.grad_clip = grad_clip
         self.detect_anomaly = detect_anomaly
-
 
     def clip_grads(self, params):
         params = list(
@@ -50,7 +50,7 @@ class OptimizerHook(Hook):
         else:
             loss.backward()
         warmup_max_iters = runner.warmup_max_iters
-        accumulate = max(1, np.interp(runner.iter, [0,warmup_max_iters], [1,subdivisions]).round())
+        accumulate = max(1, np.interp(runner.iter, [0, warmup_max_iters], [1, subdivisions]).round())
         if runner.iter % accumulate == 0:
             if self.detect_anomaly:
                 with torch.autograd.detect_anomaly():

@@ -21,16 +21,13 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
+import cv2
 import math
 import random
-from collections import Sequence
-
 import torch
-import cv2
 import numpy as np
-
 import os.path as osp
-
+from collections import Sequence
 from yolodet.dataset.pipelines.compose import Compose
 
 
@@ -41,15 +38,17 @@ def rand_uniform_strong(min, max):
         max = swap
     return random.random() * (max - min) + min
 
+
 def rand_scale(s):
     scale = rand_uniform_strong(1, s)
     if random.randint(0, 1) % 2:
         return scale
     return 1. / scale
 
+
 class LoadImageFromFile(object):
 
-    def __init__(self,to_rgb=True):
+    def __init__(self, to_rgb=True):
         self.to_rgb = to_rgb
         if not isinstance(self.to_rgb, bool):
             raise TypeError("{}: input type is invalid.".format(self))
@@ -64,17 +63,17 @@ class LoadImageFromFile(object):
         img = cv2.imdecode(np.fromfile(filename, dtype=np.uint8), -1)
         if self.to_rgb:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        h,w = img.shape[:2]
+        h, w = img.shape[:2]
         y_true = results['y_true']
         num_bbox = len(y_true)
 
-        gt_bbox = np.zeros((num_bbox, 4), dtype=np.float32) # gt_bbox[x1,y1,x2,y2]
-        gt_class = np.zeros((num_bbox, 1), dtype=np.int32) # gt_class:[number]
+        gt_bbox = np.zeros((num_bbox, 4), dtype=np.float32)  # gt_bbox[x1,y1,x2,y2]
+        gt_class = np.zeros((num_bbox, 1), dtype=np.int32)  # gt_class:[number]
         gt_score = np.ones((num_bbox, 1), dtype=np.float32)  # gt_score ：default 1
 
-        for i,yt in enumerate(y_true):
+        for i, yt in enumerate(y_true):
             gt_class[i][0] = yt[4]
-            gt_bbox[i, :] = [yt[0]/w,yt[1]/h,yt[2]/w,yt[3]/h]#格式化坐标
+            gt_bbox[i, :] = [yt[0] / w, yt[1] / h, yt[2] / w, yt[3] / h]  # 格式化坐标
 
         results['filename'] = filename
         results['img'] = img
@@ -88,12 +87,12 @@ class LoadImageFromFile(object):
 
 
 class RandomNoise(object):
-    def __init__(self,gaussian_noise=50,rand_thr=0.5):
+    def __init__(self, gaussian_noise=50, rand_thr=0.5):
         self.rand_thr = rand_thr
         self.gaussian_noise = gaussian_noise
 
     def __call__(self, results):
-        if random.random()> self.rand_thr:
+        if random.random() > self.rand_thr:
             img = results['img']
             gaussian_noise = min(self.gaussian_noise, 127)
             gaussian_noise = max(gaussian_noise, 0)
@@ -105,30 +104,31 @@ class RandomNoise(object):
 
         return results
 
+
 class RandomBlur(object):
-    def __init__(self,rand_thr=0.5):
+    def __init__(self, rand_thr=0.5):
         self.rand_thr = rand_thr
 
     def __call__(self, results):
-        if random.random()> self.rand_thr:
+        if random.random() > self.rand_thr:
             img = results['img']
             dst = cv2.GaussianBlur(img, (3, 3), 0)
             results['img'] = dst
             results['img_shape'] = dst.shape
         return results
 
+
 class RandomHSV(object):
-    def __init__(self,hue=0.1,saturation=1.5,exposure=1.5,rand_thr=0.5):
+    def __init__(self, hue=0.1, saturation=1.5, exposure=1.5, rand_thr=0.5):
         self.hue = hue
         self.saturation = saturation
         self.exposure = exposure
         self.rand_thr = rand_thr
 
-
     def __call__(self, results):
         if random.random() < self.rand_thr:
             return results
-        dhue = rand_uniform_strong(-self.hue,self.hue)  # 色调
+        dhue = rand_uniform_strong(-self.hue, self.hue)  # 色调
         dsat = rand_scale(self.saturation)  # 饱和度
         dexp = rand_scale(self.exposure)  # 曝光度
         if dsat != 1 or dexp != 1 or dhue != 0:
@@ -147,6 +147,7 @@ class RandomHSV(object):
         results['img'] = img
 
         return results
+
 
 class ImageToTensor(object):
     def __init__(self, keys=['img']):
@@ -171,6 +172,7 @@ class ToTensor(object):
             results[key] = to_tensor(results[key])
         return results
 
+
 class Normalize(object):
     """Normalize the image.
 
@@ -194,7 +196,7 @@ class Normalize(object):
         im = results['img']
         # results['ori_img'] = results['img']
         im = im.astype(np.float32, copy=False)
-        results['img'] = im/255
+        results['img'] = im / 255
 
         # if 'gt_bboxes' not in results:
         #     return results
@@ -220,28 +222,29 @@ class Normalize(object):
 
         return results
 
+
 class RandomFlip(object):
 
-    def __init__(self,random_thr=0.5):
+    def __init__(self, random_thr=0.5):
         self.random_thr = random_thr
 
     def __call__(self, results):
         r = random.random()
         # results['ori_img'] = results['img']
-        if r >self.random_thr:
+        if r > self.random_thr:
             results = self._flip_img(results)
             results = self._flip_boxes(results)
 
         return results
 
-    def _flip_boxes(self,results):
+    def _flip_boxes(self, results):
         bboxes = results['gt_bboxes']
-        bboxes[:, [2,0]] = 1 - bboxes[:, [0,2]]
+        bboxes[:, [2, 0]] = 1 - bboxes[:, [0, 2]]
         results['gt_bboxes'] = bboxes
 
         return results
 
-    def _flip_img(self,results):
+    def _flip_img(self, results):
         img = results['img']
         img = cv2.flip(img, 1)
         results['img'] = img
@@ -249,10 +252,11 @@ class RandomFlip(object):
         # results['ori_img'] = img
         return results
 
-#随机放射变换
+
+# 随机放射变换
 class RandomAffine(object):
 
-    def __init__(self,degrees=10, translate=.1, scale=.5, shear=0.0, border=(0, 0)):
+    def __init__(self, degrees=10, translate=.1, scale=.5, shear=0.0, border=(0, 0)):
         self.degrees = degrees
         self.translate = translate
         self.scale = scale
@@ -264,7 +268,7 @@ class RandomAffine(object):
         # https://medium.com/uruvideo/dataset-augmentation-with-random-homographies-a8f4b44830d4
         # targets = [cls, xyxy]
         img = results['img']
-        h,w = results['img_shape'][:2]
+        h, w = results['img_shape'][:2]
         targets = results['gt_bboxes']
         targets[:, [0, 2]] = w * targets[:, [0, 2]]
         targets[:, [1, 3]] = h * targets[:, [1, 3]]
@@ -285,8 +289,10 @@ class RandomAffine(object):
 
         # Translation 平移
         T = np.eye(3)
-        T[0, 2] = random.uniform(-self.translate, self.translate) * img.shape[1] + self.border[1]  # x translation (pixels)
-        T[1, 2] = random.uniform(-self.translate, self.translate) * img.shape[0] + self.border[0]  # y translation (pixels)
+        T[0, 2] = random.uniform(-self.translate, self.translate) * img.shape[1] + self.border[
+            1]  # x translation (pixels)
+        T[1, 2] = random.uniform(-self.translate, self.translate) * img.shape[0] + self.border[
+            0]  # y translation (pixels)
 
         # Shear 剪切
         S = np.eye(3)
@@ -335,7 +341,7 @@ class RandomAffine(object):
             gt_class = gt_class[i]
             gt_score = gt_score[i]
             targets[:, 0:4] = xy[i]
-            targets[:, [1, 3]] /= img.shape[0] # height
+            targets[:, [1, 3]] /= img.shape[0]  # height
             targets[:, [0, 2]] /= img.shape[1]  # width
             results['img'] = img
             results['gt_bboxes'] = targets
@@ -345,10 +351,11 @@ class RandomAffine(object):
 
         return results
 
-#随机平移
+
+# 随机平移
 class RandomTranslation(object):
 
-    def __init__(self,random_thr=0.5):
+    def __init__(self, random_thr=0.5):
         self.random_thr = random_thr
 
     def __call__(self, results):
@@ -357,14 +364,15 @@ class RandomTranslation(object):
 
         img = results['img']
         gt_bboxes = results['gt_bboxes']
-        h,w = img.shape[:2]
+        h, w = img.shape[:2]
 
-        gt_bboxes[:, [0,2]] =  w * gt_bboxes[:, [0,2]]
-        gt_bboxes[:, [1,3]] = h * gt_bboxes[:, [1,3]]
+        gt_bboxes[:, [0, 2]] = w * gt_bboxes[:, [0, 2]]
+        gt_bboxes[:, [1, 3]] = h * gt_bboxes[:, [1, 3]]
 
-        x_min,x_max,y_min,y_max = w ,0,h,0
+        x_min, x_max, y_min, y_max = w, 0, h, 0
         for bbox in gt_bboxes:
-            x_min ,y_min,x_max,y_max= min(x_min, bbox[0]),min(y_min, bbox[1]),max(x_max, bbox[2]),max(y_max, bbox[3])
+            x_min, y_min, x_max, y_max = min(x_min, bbox[0]), min(y_min, bbox[1]), max(x_max, bbox[2]), max(y_max,
+                                                                                                            bbox[3])
 
         d_to_left = x_min  # 包含所有目标框的最大左移动距离
         d_to_right = w - x_max  # 包含所有目标框的最大右移动距离
@@ -387,12 +395,13 @@ class RandomTranslation(object):
         results['img_shape'] = shift_img.shape
         shift_bboxes[:, [1, 3]] /= shift_img.shape[0]  # height
         shift_bboxes[:, [0, 2]] /= shift_img.shape[1]  # width
-        results['gt_bboxes'] =shift_bboxes
+        results['gt_bboxes'] = shift_bboxes
 
         return results
 
+
 class RandomCrop(object):
-    def __init__(self,rand_thr=0.5):
+    def __init__(self, rand_thr=0.5):
         self.rand_thr = rand_thr
 
     def __call__(self, results):
@@ -402,17 +411,18 @@ class RandomCrop(object):
 
         img = results['img']
         gt_bboxes = results['gt_bboxes']
-        h,w = img.shape[:2]
+        h, w = img.shape[:2]
 
-        gt_bboxes[:, [0,2]] =  w * gt_bboxes[:, [0,2]]
-        gt_bboxes[:, [1,3]] = h * gt_bboxes[:, [1,3]]
+        gt_bboxes[:, [0, 2]] = w * gt_bboxes[:, [0, 2]]
+        gt_bboxes[:, [1, 3]] = h * gt_bboxes[:, [1, 3]]
 
         x_min = w  # 裁剪后的包含所有目标框的最小的框
         x_max = 0
         y_min = h
         y_max = 0
         for bbox in gt_bboxes:
-            x_min ,y_min,x_max,y_max= min(x_min, bbox[0]),min(y_min, bbox[1]),max(x_max, bbox[2]),max(y_max, bbox[3])
+            x_min, y_min, x_max, y_max = min(x_min, bbox[0]), min(y_min, bbox[1]), max(x_max, bbox[2]), max(y_max,
+                                                                                                            bbox[3])
 
         d_to_left = x_min  # 包含所有目标框的最小框到左边的距离
         d_to_right = w - x_max  # 包含所有目标框的最小框到右边的距离
@@ -444,11 +454,12 @@ class RandomCrop(object):
         results['img_shape'] = crop_img.shape
         crop_bboxes[:, [1, 3]] /= crop_img.shape[0]  # height
         crop_bboxes[:, [0, 2]] /= crop_img.shape[1]  # width
-        results['gt_bboxes'] =crop_bboxes
+        results['gt_bboxes'] = crop_bboxes
         return results
 
+
 class MixUp(object):
-    def __init__(self,rand_thr=0.5, alpha=1.5, beta=1.5):
+    def __init__(self, rand_thr=0.5, alpha=1.5, beta=1.5):
         self.alpha = alpha
         self.beta = beta
         self.rand_thr = rand_thr
@@ -471,7 +482,7 @@ class MixUp(object):
         img_ = random.choice(list(truth.keys()))
         true_ = truth[img_]
 
-        result_b = dict(y_true=true_, img_name=img_,img_prefix=results['img_prefix'])
+        result_b = dict(y_true=true_, img_name=img_, img_prefix=results['img_prefix'])
         result_b = self.load_img(result_b)
 
         img_a = results['img']
@@ -480,7 +491,7 @@ class MixUp(object):
         img_b = result_b['img']
         gt_bbox_b = result_b['gt_bboxes']
         gt_score_b = result_b['gt_score']
-        out_img = self._mixup_img(img_a,img_b,factor)
+        out_img = self._mixup_img(img_a, img_b, factor)
         gt_bbox = np.concatenate([gt_bbox_a, gt_bbox_b], axis=0)
 
         gt_score = np.concatenate(
@@ -489,7 +500,6 @@ class MixUp(object):
         gt_class1 = results['gt_class']
         gt_class2 = result_b['gt_class']
         gt_class = np.concatenate((gt_class1, gt_class2), axis=0)
-
 
         results['gt_bboxes'] = gt_bbox
         results['gt_class'] = gt_class
@@ -510,7 +520,7 @@ class MixUp(object):
 
 
 class Mosaic(object):
-    def __init__(self,transforms=dict(),img_scale=608):
+    def __init__(self, transforms=dict(), img_scale=608):
         self.img_scale = img_scale
         self.mosaic_border = [-img_scale // 2, -img_scale // 2]
 
@@ -526,14 +536,16 @@ class Mosaic(object):
         truth = results['truth']
         result_0 = results
         imgs = [random.choice(list(truth.keys())) for _ in range(3)]
-        result_4 = [result_0] + [dict(y_true=truth[img_], img_name=img_,img_prefix=results['img_prefix']) for img_ in imgs]
-        for idx,result in enumerate(result_4):
+        result_4 = [result_0] + [dict(y_true=truth[img_], img_name=img_, img_prefix=results['img_prefix']) for img_ in
+                                 imgs]
+        for idx, result in enumerate(result_4):
             result = self.pipeline(result)
-            img, (h, w) = result['img'],result['img_shape'][:2]
+            img, (h, w) = result['img'], result['img_shape'][:2]
             if idx == 0:  # top left
                 img4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)  # base image with 4 tiles
                 x1a, y1a, x2a, y2a = max(xc - w, 0), max(yc - h, 0), xc, yc  # xmin, ymin, xmax, ymax (large image)大图位置
-                x1b, y1b, x2b, y2b = w - (x2a - x1a), h - (y2a - y1a), w, h  # xmin, ymin, xmax, ymax (small image)小图位置 从右下角剪切
+                x1b, y1b, x2b, y2b = w - (x2a - x1a), h - (
+                            y2a - y1a), w, h  # xmin, ymin, xmax, ymax (small image)小图位置 从右下角剪切
 
             elif idx == 1:  # top right
                 x1a, y1a, x2a, y2a = xc, max(yc - h, 0), min(xc + w, s * 2), yc
@@ -554,8 +566,8 @@ class Mosaic(object):
             gt_score = result['gt_score']
             labels = gt_bboxes.copy()
             if len(labels):  # Normalized xywh to pixel xyxy format
-                labels[:, [0,2]] = w * labels[:, [0,2]] + padw  # pad width
-                labels[:, [1,3]] = h * labels[:, [1,3]] + padh  # pad height
+                labels[:, [0, 2]] = w * labels[:, [0, 2]] + padw  # pad width
+                labels[:, [1, 3]] = h * labels[:, [1, 3]] + padh  # pad height
             labels4.append(labels)
             gt_classes.append(gt_class)
             gt_scores.append(gt_score)
@@ -570,9 +582,9 @@ class Mosaic(object):
             _w = labels4[:, 2] - labels4[:, 0]
             _h = labels4[:, 3] - labels4[:, 1]
             area = _w * _h
-            labels4 = labels4[np.where(area>20)]
-            gt_classes = gt_classes[np.where(area>20)]
-            gt_scores = gt_scores[np.where(area>20)]
+            labels4 = labels4[np.where(area > 20)]
+            gt_classes = gt_classes[np.where(area > 20)]
+            gt_scores = gt_scores[np.where(area > 20)]
             labels4[:, [1, 3]] /= 2 * s  # height
             labels4[:, [0, 2]] /= 2 * s  # width
 
@@ -587,7 +599,8 @@ class Mosaic(object):
 
 
 class Collect(object):
-    def __init__(self,keys=['img', 'gt_bboxes', 'gt_class', 'gt_score'],meta_keys=('filename', 'ori_shape', 'img_shape')):
+    def __init__(self, keys=['img', 'gt_bboxes', 'gt_class', 'gt_score'],
+                 meta_keys=('filename', 'ori_shape', 'img_shape')):
         self.keys = keys
         self.meta_keys = meta_keys
 
@@ -606,7 +619,7 @@ class Collect(object):
 
 
 class Resize(object):
-    def __init__(self,img_scale=608,letterbox=True, auto= True,scaleup=True):
+    def __init__(self, img_scale=608, letterbox=True, auto=True, scaleup=True):
         self.img_scale = img_scale
         self.letterbox = letterbox
         self.auto = auto
@@ -614,15 +627,15 @@ class Resize(object):
 
     def __call__(self, results):
         if self.letterbox:
-            h,w = results['img_shape'][:2]
-            img, ratio, pad = letterbox(results['img'],new_shape=self.img_scale,auto=self.auto,scaleup=self.scaleup)
+            h, w = results['img_shape'][:2]
+            img, ratio, pad = letterbox(results['img'], new_shape=self.img_scale, auto=self.auto, scaleup=self.scaleup)
             results['img'] = img
             results['img_shape'] = img.shape
             if 'gt_bboxes' in results:
                 gt_bboxes = results['gt_bboxes']
-                if len(gt_bboxes)>0:
-                    gt_bboxes[:, [0,2]] = ratio[0] * w * gt_bboxes[:, [0,2]] + pad[0]  # pad width
-                    gt_bboxes[:, [1,3]] = ratio[1] * h * gt_bboxes[:, [1,3]] + pad[1]  # pad height
+                if len(gt_bboxes) > 0:
+                    gt_bboxes[:, [0, 2]] = ratio[0] * w * gt_bboxes[:, [0, 2]] + pad[0]  # pad width
+                    gt_bboxes[:, [1, 3]] = ratio[1] * h * gt_bboxes[:, [1, 3]] + pad[1]  # pad height
                     # gt_bboxes[:, 2] = ratio[0] * w * gt_bboxes[:, 2] + pad[0]
                     # gt_bboxes[:, 3] = ratio[1] * h * gt_bboxes[:, 3] + pad[1]
                     gt_bboxes[:, [1, 3]] /= img.shape[0]  # height
@@ -647,20 +660,21 @@ class Resize(object):
             raise e
         return results
 
-def draw_box(img, bboxes,class_name,gt_class):
+
+def draw_box(img, bboxes, class_name, gt_class):
     # for b in bboxes:
     #     img = cv2.rectangle(img, (b[0], b[1]), (b[2], b[3]), (0, 255, 0), 1)
-    for idx,ind in enumerate(gt_class):
-        if ind>-1:
+    for idx, ind in enumerate(gt_class):
+        if ind > -1:
             b = bboxes[idx]
             img = cv2.rectangle(img, (b[0], b[1]), (b[2], b[3]), (0, 255, 0), 1)
             font = cv2.FONT_HERSHEY_SIMPLEX
-            img = cv2.putText(img,class_name[int(ind)],(b[0], b[1]), font, 0.3, (0, 0, 255), 1)
+            img = cv2.putText(img, class_name[int(ind)], (b[0], b[1]), font, 0.3, (0, 0, 255), 1)
     return img
 
 
 class RandomShape(object):
-    #Only multiples of 32 are supported
+    # Only multiples of 32 are supported
     def __init__(self, sizes=[320, 352, 384, 416, 448, 480, 512, 544, 576, 608], random_inter=True):
 
         self.sizes = sizes
@@ -673,15 +687,15 @@ class RandomShape(object):
             cv2.INTER_LANCZOS4,
         ] if random_inter else []
 
-    def __call__(self,batch):
+    def __call__(self, batch):
         shape = np.random.choice(self.sizes)
 
         method = np.random.choice(self.interps) if self.random_inter else cv2.INTER_NEAREST
-        for i,result in enumerate(batch):
+        for i, result in enumerate(batch):
             im = result['img']
-            if isinstance(im,torch.Tensor):
+            if isinstance(im, torch.Tensor):
                 im = im.numpy()
-                if im.shape[0]==3:
+                if im.shape[0] == 3:
                     im = im.transpose(1, 2, 0)
             h, w = im.shape[:2]
             scale_x = float(shape) / w
@@ -692,10 +706,10 @@ class RandomShape(object):
             bboxes[:, 2] *= scale_x
             bboxes[:, 1] *= scale_y
             bboxes[:, 3] *= scale_y
-            x,y = np.where(bboxes < 0)
-            if len(x)>0:
+            x, y = np.where(bboxes < 0)
+            if len(x) > 0:
                 for i in x:
-                    print('bbox index < 0 :',bboxes[i])
+                    print('bbox index < 0 :', bboxes[i])
 
             result['gt_bboxes'] = bboxes
             im = cv2.resize(
@@ -712,7 +726,6 @@ class RandomShape(object):
             im = to_tensor(im.transpose(2, 0, 1))
             result['img'] = im
         return batch
-
 
 
 def imnormalize(img, mean, std, to_rgb=True):
@@ -764,6 +777,7 @@ def imdenormalize(img, mean, std, to_bgr=True):
         cv2.cvtColor(img, cv2.COLOR_RGB2BGR, img)  # inplace
     return img
 
+
 def to_tensor(data):
     """Convert objects of various python types to :obj:`torch.Tensor`.
 
@@ -783,6 +797,7 @@ def to_tensor(data):
     else:
         raise TypeError('type {} cannot be converted to tensor.'.format(
             type(data)))
+
 
 def letterbox(img, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True):
     # Resize image to a 32-pixel-multiple rectangle https://github.com/ultralytics/yolov3/issues/232

@@ -24,9 +24,10 @@
 =================================================='''
 from .hook import Hook
 
+
 class CheckpointHook(Hook):
 
-    def __init__(self,interval=-1,save_optimizer=True,out_dir=None,**kwargs):
+    def __init__(self, interval=-1, save_optimizer=True, out_dir=None, **kwargs):
         self.interval = interval
         self.save_optimizer = save_optimizer
         self.out_dir = out_dir

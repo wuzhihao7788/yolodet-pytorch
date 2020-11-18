@@ -21,7 +21,7 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
-#copy and modify from mmcv.runner.runner
+# copy and modify from mmcv.runner.runner
 
 # Copyright (c) Open-MMLab. All rights reserved.
 import os.path as osp
@@ -34,17 +34,24 @@ from yolodet.hooks.hook import Hook
 from yolodet.hooks.iter_timer_hook import IterTimerHook
 from yolodet.models.utils.torch_utils import ModelEMA
 from yolodet.utils.registry import HOOKS
-from yolodet.utils.newInstance_utils import obj_from_dict,build_from_dict
+from yolodet.utils.newInstance_utils import obj_from_dict, build_from_dict
 from tools.file import file_utils
 from yolodet.utils.Logger import Logging
-from yolodet.apis.checkpoint import load_checkpoint,save_checkpoint
+from yolodet.apis.checkpoint import load_checkpoint, save_checkpoint
 
 import torch
 
 
-
 class Runner(object):
-    def __init__(self,model,batch_processor,optimizer=None,work_dir=None,logger=None,meta=None,ema=None):
+    def __init__(self,
+                 model,
+                 batch_processor,
+                 optimizer=None,
+                 work_dir=None,
+                 logger=None,
+                 meta=None,
+                 ema=None):
+
         assert callable(batch_processor)
         self.model = model
         if meta is not None:
@@ -64,7 +71,7 @@ class Runner(object):
         self.batch_processor = batch_processor
 
         # create work_dir
-        if isinstance(work_dir,str):
+        if isinstance(work_dir, str):
             self.work_dir = osp.abspath(work_dir)
             file_utils.mkdir_or_exist(self.work_dir)
         elif work_dir is None:
@@ -112,10 +119,12 @@ class Runner(object):
     def epoch(self):
         """int: Current epoch."""
         return self._epoch
+
     @property
     def warmup_max_iters(self):
         """int: Current epoch."""
         return self._warmup_max_iters
+
     @property
     def iter(self):
         """int: Current iteration."""
@@ -136,8 +145,8 @@ class Runner(object):
         """int: Maximum training iterations."""
         return self._max_iters
 
-    def init_ema(self,ema):
-        return ModelEMA(self.model,**ema)
+    def init_ema(self, ema):
+        return ModelEMA(self.model, **ema)
 
     def init_optimizer(self, optimizer):
 
@@ -160,7 +169,7 @@ class Runner(object):
             if 'momentum' in optimizer.keys():
                 self._momentum = optimizer['momentum']
 
-            optimizer = obj_from_dict(optimizer, torch.optim,dict(params=pg0))
+            optimizer = obj_from_dict(optimizer, torch.optim, dict(params=pg0))
         elif not isinstance(optimizer, torch.optim.Optimizer):
             raise TypeError(
                 'optimizer must be either an Optimizer object or a dict, '
@@ -202,7 +211,6 @@ class Runner(object):
     def call_hook(self, fn_name):
         for hook in self._hooks:
             getattr(hook, fn_name)(self)
-
 
     def train(self, data_loader, **kwargs):
         self.model.train()
@@ -253,12 +261,13 @@ class Runner(object):
         self.logger.info('load checkpoint from %s', filename)
         return load_checkpoint(self.model, filename, map_location=map_location, strict=strict)
 
-    def resume(self,checkpoint,resume_optimizer=True,map_location='default'):
+    def resume(self, checkpoint, resume_optimizer=True, map_location='default'):
         if map_location == 'default':
             device_id = torch.cuda.current_device()
-            checkpoint = load_checkpoint(self.model,checkpoint,map_location=lambda storage, loc: storage.cuda(device_id))
+            checkpoint = load_checkpoint(self.model, checkpoint,
+                                         map_location=lambda storage, loc: storage.cuda(device_id))
         else:
-            checkpoint = load_checkpoint(self.model,checkpoint, map_location=map_location)
+            checkpoint = load_checkpoint(self.model, checkpoint, map_location=map_location)
 
         self._epoch = checkpoint['meta']['epoch']
         self._iter = checkpoint['meta']['iter']
@@ -267,7 +276,8 @@ class Runner(object):
 
         self.logger.info('resumed epoch %d, iter %d', self.epoch, self.iter)
 
-    def save_checkpoint(self,out_dir, filename_tmpl='epoch_{}.pth', save_optimizer=True, meta=None, create_symlink=True):
+    def save_checkpoint(self, out_dir, filename_tmpl='epoch_{}.pth', save_optimizer=True, meta=None,
+                        create_symlink=True):
         if meta is None:
             meta = dict(epoch=self.epoch + 1, iter=self.iter)
         else:
@@ -302,12 +312,12 @@ class Runner(object):
             max_epochs (int): Total training epochs.
         """
         assert isinstance(data_loaders, list)
-        assert isinstance(workflow,list)
+        assert isinstance(workflow, list)
         assert len(data_loaders) == len(workflow)
 
         self._max_epochs = max_epochs
         work_dir = self.work_dir if self.work_dir is not None else 'NONE'
-        self.logger.info('Start running, host: %s, work_dir: %s','{}@{}'.format(getuser(), gethostname()), work_dir)
+        self.logger.info('Start running, host: %s, work_dir: %s', '{}@{}'.format(getuser(), gethostname()), work_dir)
         self.logger.info('workflow: %s, max: %d epochs', workflow, max_epochs)
         self.call_hook('before_run')
 
@@ -318,12 +328,12 @@ class Runner(object):
                     if not hasattr(self, mode):
                         raise ValueError(
                             'runner has no method named "{}" to run an epoch'.
-                            format(mode))
+                                format(mode))
                     epoch_runner = getattr(self, mode)
                 else:
                     raise TypeError('mode in workflow must be a str or '
                                     'callable function, not {}'.format(
-                                        type(mode)))
+                        type(mode)))
                 for _ in range(epochs):
                     if mode == 'train' and self.epoch >= max_epochs:
                         return

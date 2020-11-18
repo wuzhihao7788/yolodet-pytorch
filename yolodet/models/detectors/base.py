@@ -23,14 +23,30 @@
 =================================================='''
 import torch
 import torch.nn as nn
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 from yolodet.models.utils.torch_utils import scale_img
+from yolodet.utils.registry import BACKBONES, NECKS, HEADS
+from yolodet.utils.newInstance_utils import build_from_dict
 
 
 class BaseDetector(nn.Module, metaclass=ABCMeta):
 
-    def __init__(self):
+    def __init__(self,
+                 backbone=None,
+                 neck=None,
+                 head=None,
+                 pretrained=None):
+
         super(BaseDetector, self).__init__()
+        self.backbone = build_from_dict(backbone, BACKBONES)
+
+        if neck is not None:
+            self.neck = build_from_dict(neck, NECKS)
+
+        if head is not None:
+            self.head = build_from_dict(head, HEADS)
+
+        self.init_weights(pretrained)
 
     @property
     def with_neck(self):
@@ -40,17 +56,47 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
     def with_head(self):
         return hasattr(self, 'head') and self.head is not None
 
-    @abstractmethod
-    def extract_feat(self, imgs):
-        pass
+    def init_weights(self, pretrained=None):
+        if pretrained is not None:
+            print('load model from: {}'.format(pretrained))
+            self.backbone.init_weights(pretrained=pretrained)
 
-    def forward(self, img, img_metas, return_loss=True, **kwargs):
+        if self.with_neck:
+            if isinstance(self.neck, nn.Sequential):
+                for m in self.neck:
+                    m.init_weights()
+            else:
+                self.neck.init_weights()
+
+        if self.with_head:
+            if isinstance(self.head, nn.Sequential):
+                for m in self.head:
+                    m.init_weights()
+            else:
+                self.head.init_weights()
+
+    def extract_feat(self, img):
+        """Directly extract features from the backbone+necks
+        """
+        x = self.backbone(img)
+
+        if self.with_neck:
+            x = self.neck(x)
+        return x
+
+    def forward(self,
+                img,
+                img_metas,
+                return_loss=True,
+                **kwargs):
+
         if kwargs is not None and 'idx' in kwargs:
             idx = kwargs.pop('idx').cpu().numpy()
             img_metas = [img_metas[i] for i in idx]
             for k, v in kwargs.items():
                 if isinstance(v, list):
                     kwargs[k] = [v[i] for i in idx]
+
         if return_loss:
             if img_metas is None or kwargs is None or not len(kwargs):
                 return self.forward_flops(img)
@@ -81,22 +127,40 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
 
             return results
 
-    @abstractmethod
-    def forward_train(self, img, img_metas, **kwargs):
-        pass
+    def forward_train(self,
+                      img,
+                      img_metas,
+                      gt_bboxes,
+                      gt_score,
+                      gt_class,
+                      **kwargs):
 
-    @abstractmethod
-    def forward_test(self, img, img_metas, **kwargs):
-        pass
+        x = self.extract_feat(img)
 
-    @abstractmethod
-    def forward_eval(self, img, img_metas, **kwargs):
-        pass
+        losses = dict()
 
-    @abstractmethod
+        head_outs = self.head(x)  # y1,y2,y3
+        batch_size = len(img)  # input, img_metas, batch_size, gt_bboxes, gt_class, gt_score
+        head_loss_inputs = [head_outs, img_metas, batch_size, gt_bboxes, gt_class, gt_score]
+        head_loss = self.head.loss(*head_loss_inputs)
+        for i in range(len(head_outs)):
+            for name, value in head_loss.items():
+                losses['Y{}.{}'.format(i + 1, name)] = value[i].detach()
+        losses.update(head_loss)
+
+        return losses
+
+    def forward_test(self, x, img_metas, **kwargs):
+        head_det_inputs = [x, img_metas, kwargs]
+        result = self.head.get_det_bboxes(*head_det_inputs)
+        return result
+
     def forward_flops(self, img):
-        pass
+        x = self.extract_feat(img)
+        head_outs = self.head(x)  # y1,y2,y3
+        return head_outs
 
-    def init_weights(self, pretrained=None):
-        if pretrained is not None:
-            print('load model from: {}'.format(pretrained))
+    def forward_eval(self, img, img_metas, **kwargs):
+        x = self.extract_feat(img)
+        head_outs = self.head(x)  # y1,y2,y3
+        return self.head.get_eval_bboxes(head_outs)

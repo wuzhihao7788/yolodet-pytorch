@@ -23,7 +23,6 @@
 =================================================='''
 
 import collections
-
 from yolodet.utils.registry import TRANSFORMS
 from yolodet.utils.newInstance_utils import build_from_dict
 

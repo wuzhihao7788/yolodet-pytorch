@@ -21,25 +21,29 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
+import os
 import glob
 import json
-import os
-import shutil
-from pathlib import Path
-
-import cv2
-import numpy as np
 import torch
+import numpy as np
 from tqdm import tqdm
-
-from yolodet.models.heads.base import non_max_suppression, clip_coords, scale_coords, xyxy2xywh
+from pathlib import Path
 from yolodet.models.loss.base import box_iou
 from yolodet.models.utils import torch_utils
 from yolodet.utils.util import ap_per_class, coco80_to_coco91_class
+from yolodet.models.heads.base import non_max_suppression, clip_coords, scale_coords, xyxy2xywh
 
 
-def single_gpu_test(model, data_loader,half=False,conf_thres=0.001,iou_thres = 0.6,merge = False,save_json=False,augment=False,verbose=False,coco_val_path =''):
-
+def single_gpu_test(model,
+                    data_loader,
+                    half=False,
+                    conf_thres=0.001,
+                    iou_thres=0.6,
+                    merge=False,
+                    save_json=False,
+                    augment=False,
+                    verbose=False,
+                    coco_val_path=''):
     device = next(model.parameters()).device  # get model device
     # Half
     half = device.type != 'cpu' and half  # half precision only supported on CUDA
@@ -73,10 +77,10 @@ def single_gpu_test(model, data_loader,half=False,conf_thres=0.001,iou_thres = 0
         img_metas = batch['img_metas']
 
         targets = ft([]).to(device)
-        for i,gtb in enumerate(gt_bbox):
+        for i, gtb in enumerate(gt_bbox):
             gtc = torch.from_numpy(gt_class[i]).to(device)
-            img_idx = torch.ones(len(gtb),1,device=device)*i
-            targets = torch.cat([targets,torch.cat((img_idx,gtc,torch.from_numpy(gtb).to(device)),dim=-1)])
+            img_idx = torch.ones(len(gtb), 1, device=device) * i
+            targets = torch.cat([targets, torch.cat((img_idx, gtc, torch.from_numpy(gtb).to(device)), dim=-1)])
 
             # Disable gradients
         with torch.no_grad():
@@ -224,7 +228,7 @@ def single_gpu_test(model, data_loader,half=False,conf_thres=0.001,iou_thres = 0
 
             imgIds = [int(Path(x).stem) for x in data_loader.dataset.imgs]
             cocoGt = COCO(
-                glob.glob(coco_val_path+'/instances_val*.json')[0])  # initialize COCO ground truth api
+                glob.glob(coco_val_path + '/instances_val*.json')[0])  # initialize COCO ground truth api
             cocoDt = cocoGt.loadRes(f)  # initialize COCO pred api
             cocoEval = COCOeval(cocoGt, cocoDt, 'bbox')
             cocoEval.params.imgIds = imgIds  # image IDs to evaluate
@@ -241,5 +245,3 @@ def single_gpu_test(model, data_loader,half=False,conf_thres=0.001,iou_thres = 0
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
     return (mp, mr, map50, map, *(loss.cpu() / len(data_loader)).tolist()), maps, t
-
-

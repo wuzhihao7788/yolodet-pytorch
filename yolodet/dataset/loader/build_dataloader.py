@@ -22,16 +22,11 @@
                   ┗┻┛  ┗┻┛
 =================================================='''
 import os
+import torch
 import platform
 from collections import defaultdict
-from functools import partial
-
-import torch
 from torch.utils.data import DataLoader
-from yolodet.utils.registry import TRANSFORMS
-from yolodet.utils.newInstance_utils import build_from_dict
 
-from torch.utils.data.dataloader import default_collate
 
 if platform.system() != 'Windows':
     # https://github.com/pytorch/pytorch/issues/973
@@ -56,10 +51,14 @@ def collate(batch):
         if isinstance(clt[k][0], torch.Tensor):
             clt[k] = torch.stack(v, 0)
     # collate = default_collate(batch)
+
     return clt
 
 
-def build_dataloader(dataset, data, shuffle=True, **kwargs):
+def build_dataloader(dataset,
+                     data,
+                     shuffle=True,
+                     **kwargs):
     """Build PyTorch DataLoader.
 
     In distributed training, each GPU/process has a dataloader.
@@ -67,12 +66,6 @@ def build_dataloader(dataset, data, shuffle=True, **kwargs):
 
     Args:
         dataset (Dataset): A PyTorch dataset.
-        imgs_per_gpu (int): Number of images on each GPU, i.e., batch size of
-            each GPU.
-        workers_per_gpu (int): How many subprocesses to use for data loading
-            for each GPU.
-        num_gpus (int): Number of GPUs. Only used in non-distributed training.
-        dist (bool): Distributed training/test or not. Default: True.
         shuffle (bool): Whether to shuffle the data at every epoch.
             Default: True.
         kwargs: any keyword argument to be used to initialize DataLoader
@@ -81,7 +74,8 @@ def build_dataloader(dataset, data, shuffle=True, **kwargs):
         DataLoader: A PyTorch dataloader.
     """
     batch_size = data.batch_size // data.subdivisions
-    num_workers = min([os.cpu_count() // data.workers_per_gpu, batch_size if batch_size > 1 else 0, 8])
+    num_workers = min([os.cpu_count() // data.workers_per_gpu,
+                       batch_size if batch_size > 1 else 0, 8])
     # num_workers = data.workers_per_gpu
     data_loader = DataLoader(
         dataset,

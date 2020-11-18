@@ -21,18 +21,17 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
-import json
 import os
-
-import numpy as np
-import torch
-from torch import nn
-
-from yolodet.utils.config import Config
-from yolodet.dataset.pipelines.compose import Compose
 import cv2
-from tools import mkdir_or_exist
+import json
+import torch
+import numpy as np
+from torch import nn
+from yolodet.utils.config import Config
 from yolodet.models.utils import torch_utils
+from tools.file.file_utils import mkdir_or_exist
+from yolodet.dataset.pipelines.compose import Compose
+
 
 def init_detector(config, checkpoint=None, device='cuda:0'):
     """Initialize a detectors from config file.
@@ -52,7 +51,7 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
         raise TypeError('config must be a filename or Config object, '
                         'but got {}'.format(type(config)))
     config.model.pretrained = None
-    model = attempt_load(checkpoint,map_location=device)
+    model = attempt_load(checkpoint, map_location=device)
     model.cfg = config  # save the config in the model for convenience
     return model
 
@@ -72,13 +71,21 @@ class LoadImage(object):
         return results
 
 
-def inference_detector(model, img,scores_thr=0.3,augment=False, half=False,merge=False):
+def inference_detector(model,
+                       img,
+                       scores_thr=0.3,
+                       augment=False,
+                       half=False,
+                       merge=False):
     """Inference image(s) with the detectors.
 
     Args:
+        merge:
+        half:
+        augment:
+        scores_thr:
+        img:
         model (nn.Module): The loaded detectors.
-        imgs (str/ndarray or list[str/ndarray]): Either image files or loaded
-            images.
 
     Returns:
         If imgs is a str, a generator will be returned, otherwise return the
@@ -96,17 +103,17 @@ def inference_detector(model, img,scores_thr=0.3,augment=False, half=False,merge
     half = device.type != 'cpu' and half  # half precision only supported on CUDA, CUDA >=10.1,pytorch >=1.5
     # ori_img = data.pop('ori_img')
     if len(img.shape) == 3:  # cv2 image
-        if isinstance(img,np.ndarray):
+        if isinstance(img, np.ndarray):
             img = torch.from_numpy(img.transpose(2, 0, 1)).unsqueeze(0)
-        elif isinstance(img,torch.Tensor):
+        elif isinstance(img, torch.Tensor):
             img = img.unsqueeze(0)
     elif len(img.shape) == 4:
-        if isinstance(img,np.ndarray):
+        if isinstance(img, np.ndarray):
             img = torch.from_numpy(img.transpose(0, 3, 1, 2))
     img = img.to(device).half() if half else img.to(device).float()  # uint8 to fp16/32
     data['img'] = img
-    assert isinstance(scores_thr,float),'scores_thr must float'
-    if scores_thr>1 or scores_thr<0:
+    assert isinstance(scores_thr, float), 'scores_thr must float'
+    if scores_thr > 1 or scores_thr < 0:
         raise Exception('scores_thr must >=0 or <=1')
 
     data['scores_thr'] = scores_thr
@@ -121,14 +128,13 @@ def inference_detector(model, img,scores_thr=0.3,augment=False, half=False,merge
         t1 = torch_utils.time_synchronized()
         result = model(return_loss=False, rescale=True, **data)
         t2 = torch_utils.time_synchronized()
-    return result ,t2 - t1
+    return result, t2 - t1
 
 
 def attempt_load(weights, map_location=None):
     # Loads an ensemble of models weights=[a,b,c] or a single model weights=[a] or weights=a
     model = nn.ModuleList()
     for w in weights if isinstance(weights, list) else [weights]:
-
         model.append(torch.load(w, map_location=map_location)['model'].float().eval())  # load FP32 model
 
     if len(model) == 1:
@@ -141,10 +147,17 @@ def attempt_load(weights, map_location=None):
 
 
 # TODO: merge this method with the one in BaseDetector
-def show_result(img,result,class_names,show=True,save_json=False,save_file=False,out_path=None,file_name=None):
+def show_result(img,
+                result,
+                class_names,
+                show=True,
+                save_json=False,
+                save_file=False,
+                out_path=None,
+                file_name=None):
     # assert isinstance(class_names, (None,tuple, list))
-    assert isinstance(img,(str,np.ndarray))
-    if isinstance(img,str):
+    assert isinstance(img, (str, np.ndarray))
+    if isinstance(img, str):
         img = cv2.imdecode(np.fromfile(img, dtype=np.uint8), -1)
     img = img.copy()
 
@@ -152,7 +165,7 @@ def show_result(img,result,class_names,show=True,save_json=False,save_file=False
         mkdir_or_exist(out_path)
         basename = os.path.basename(file_name)
         bname = os.path.splitext(basename)[0]
-        with open(os.path.join(out_path,bname+'.json'),'w',encoding='utf8') as f:
+        with open(os.path.join(out_path, bname + '.json'), 'w', encoding='utf8') as f:
             json.dump(result, f)
 
     for rslt in result:
@@ -162,15 +175,16 @@ def show_result(img,result,class_names,show=True,save_json=False,save_file=False
         left_top = (bbox_int[0], bbox_int[1])
         right_bottom = (bbox_int[2], bbox_int[3])
         cv2.rectangle(
-            img, left_top, right_bottom, color=(0,0,255), thickness=2)
+            img, left_top, right_bottom, color=(0, 0, 255), thickness=2)
         label_text = class_names[
             label] if class_names is not None else 'cls {}'.format(label)
         label_text += '|{:.02f}'.format(score)
-        cv2.putText(img, label_text, (bbox_int[0], bbox_int[1] - 2),cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5, color=(0,255,0))
+        cv2.putText(img, label_text, (bbox_int[0], bbox_int[1] - 2),
+                    cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5, color=(0, 255, 0))
 
     if save_file and out_path and file_name:
         mkdir_or_exist(out_path)
-        cv2.imwrite(os.path.join(out_path,file_name),img)
+        cv2.imwrite(os.path.join(out_path, file_name), img)
     if show:
         win_name = 'inference result images'
         wait_time = 0
@@ -187,10 +201,3 @@ def show_result(img,result,class_names,show=True,save_json=False,save_file=False
             ret = cv2.waitKey(wait_time)
 
     return img
-
-# def show_result_pyplot(img,result,class_names,score_thr=0.01,fig_size=(15, 10)):
-#     img = show_result(img, result, class_names, score_thr=score_thr, show=False)
-#     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-#     plt.figure(figsize=fig_size)
-#     plt.imshow(img)
-#     plt.show()

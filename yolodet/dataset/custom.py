@@ -21,20 +21,25 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
-from collections import defaultdict
-
-from torch.utils.data import Dataset
-import os.path as osp
 import numpy as np
-
+import os.path as osp
+from collections import defaultdict
+from torch.utils.data import Dataset
 from yolodet.dataset.pipelines.compose import Compose
 
 
 class Custom(Dataset):
-
     CLASSES = None
 
-    def __init__(self, ann_file,name_file, data_root, img_prefix,pipeline,num_bbox=60, train=True):
+    def __init__(self,
+                 ann_file,
+                 name_file,
+                 data_root,
+                 img_prefix,
+                 pipeline,
+                 num_bbox=60,
+                 train=True):
+
         super(Custom, self).__init__()
         self.ann_file = ann_file
         self.data_root = data_root
@@ -59,7 +64,6 @@ class Custom(Dataset):
 
         self.imgs = list(self.truth.keys())
         self.pipeline = Compose(pipeline)
-
 
     def __len__(self):
         return len(self.truth.keys())
@@ -112,13 +116,13 @@ class Custom(Dataset):
         data = self.prepare_train_img(idx)
         return data
 
-    def get_ann_info(self,idx):
+    def get_ann_info(self, idx):
         return_dict = dict()
         img_ = self.imgs[idx]
         truth_ = self.truth[img_]
         bboxes = []
         labels = []
-        for i,yt in enumerate(truth_):
+        for i, yt in enumerate(truth_):
             labels.append(yt[4])
             bboxes.append(yt[:4])
         return_dict['bboxes'] = np.array(bboxes, dtype=np.float32)

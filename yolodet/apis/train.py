@@ -22,19 +22,17 @@
                   ┗┻┛  ┗┻┛
 =================================================='''
 import math
-import random
-from collections import OrderedDict
-
-from yolodet.utils.Logger import Logging
-import torch.nn.functional as F
-
-import numpy as np
 import torch
+import random
+import numpy as np
+import torch.nn.functional as F
 import torch.distributed as dist
-from yolodet.dataset.loader.build_dataloader import build_dataloader
+from collections import OrderedDict
 from yolodet.apis.runner import Runner
-from yolodet.utils.newInstance_utils import build_from_dict
+from yolodet.utils.Logger import Logging
 from yolodet.utils.registry import DATASET
+from yolodet.utils.newInstance_utils import build_from_dict
+from yolodet.dataset.loader.build_dataloader import build_dataloader
 
 
 def set_random_seed(seed, deterministic=False):
@@ -82,7 +80,7 @@ def parse_losses(losses):
     return loss, log_vars
 
 
-def batch_processor(model, data, train_mode,**kwargs):
+def batch_processor(model, data, train_mode, **kwargs):
     """Process a data batch.
 
     This method is required as an argument of Runner, which defines how to
@@ -99,7 +97,7 @@ def batch_processor(model, data, train_mode,**kwargs):
         dict: A dict containing losses and log vars.
     """
     if 'multi_scale' in kwargs and kwargs['multi_scale']:
-    # if 'multi_scale' in kwargs:
+        # if 'multi_scale' in kwargs:
         imgs = data['img']
         imgsz = imgs.shape[-1]
         # sz = random.randrange(imgsz * 0.5, imgsz * 1.5 + 32) // 32 * 32  # size
@@ -115,17 +113,17 @@ def batch_processor(model, data, train_mode,**kwargs):
     loss, log_vars = parse_losses(losses)
 
     outputs = dict(
-        loss=loss*len(data['img']), log_vars=log_vars, num_samples=len(data['img']))
+        loss=loss * len(data['img']), log_vars=log_vars, num_samples=len(data['img']))
 
     return outputs
 
 
-def train_detector(model,dataset,cfg,validate=False,timestamp=None,meta=None):
+def train_detector(model, dataset, cfg, validate=False, timestamp=None, meta=None):
     logger = Logging.getLogger()
     # prepare data loaders
     dataset = dataset if isinstance(dataset, (list, tuple)) else [dataset]
     data_loaders = [
-        build_dataloader(ds,data=cfg.data) for ds in dataset
+        build_dataloader(ds, data=cfg.data) for ds in dataset
     ]
 
     # build runner
@@ -135,22 +133,22 @@ def train_detector(model,dataset,cfg,validate=False,timestamp=None,meta=None):
         ema = cfg.ema
     else:
         ema = None
-    runner = Runner(model,batch_processor,optimizer,cfg.work_dir,logger=logger,meta=meta,ema=ema)
+    runner = Runner(model, batch_processor, optimizer, cfg.work_dir, logger=logger, meta=meta, ema=ema)
     # an ugly walkaround to make the .log and .log.json filenames the same
     runner.timestamp = timestamp
 
     # register eval hooks 需要放在日志前面，不然打印不出日志。
     if validate:
-        cfg.data.val.train=False
+        cfg.data.val.train = False
         val_dataset = build_from_dict(cfg.data.val, DATASET)
-        val_dataloader = build_dataloader(val_dataset,shuffle=False,data=cfg.data)
+        val_dataloader = build_dataloader(val_dataset, shuffle=False, data=cfg.data)
         eval_cfg = cfg.get('evaluation', {})
         from yolodet.hooks.eval_hook import EvalHook
         runner.register_hook(EvalHook(val_dataloader, **eval_cfg))
 
     # register hooks
     # runner.register_training_hooks(cfg.lr_config, cfg.optimizer_config,cfg.checkpoint_config)
-    runner.register_training_hooks(cfg.lr_config, cfg.optimizer_config,cfg.checkpoint_config, cfg.log_config)
+    runner.register_training_hooks(cfg.lr_config, cfg.optimizer_config, cfg.checkpoint_config, cfg.log_config)
 
     if cfg.resume_from:
         runner.resume(cfg.resume_from)
