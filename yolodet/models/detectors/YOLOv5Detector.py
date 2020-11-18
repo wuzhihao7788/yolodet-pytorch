@@ -21,7 +21,6 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
-from torch import nn
 from yolodet.models.detectors.base import BaseDetector
 
 
@@ -34,9 +33,6 @@ class YOLOv5Detector(BaseDetector):
                  neck=None,
                  head=None,
                  pretrained=None):
-
-        self.depth_multiple = depth_multiple
-        self.width_multiple = width_multiple
 
         backbone['depth_multiple'] = depth_multiple
         backbone['width_multiple'] = width_multiple
