@@ -23,7 +23,7 @@
 =================================================='''
 import os.path as osp
 from yolodet.utils.Logger import Logging
-from tools import file_utils
+from tools.file import file_utils
 import torch
 from collections import OrderedDict
 

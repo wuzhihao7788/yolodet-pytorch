@@ -25,14 +25,12 @@ import math
 import random
 from collections import OrderedDict
 
-from yolodet.models.utils.torch_utils import select_device
 from yolodet.utils.Logger import Logging
 import torch.nn.functional as F
 
 import numpy as np
 import torch
 import torch.distributed as dist
-from torch.nn.parallel import DataParallel
 from yolodet.dataset.loader.build_dataloader import build_dataloader
 from yolodet.apis.runner import Runner
 from yolodet.utils.newInstance_utils import build_from_dict
@@ -147,7 +145,7 @@ def train_detector(model,dataset,cfg,validate=False,timestamp=None,meta=None):
         val_dataset = build_from_dict(cfg.data.val, DATASET)
         val_dataloader = build_dataloader(val_dataset,shuffle=False,data=cfg.data)
         eval_cfg = cfg.get('evaluation', {})
-        from yolodet.models.hooks.eval_hook import EvalHook
+        from yolodet.hooks.eval_hook import EvalHook
         runner.register_hook(EvalHook(val_dataloader, **eval_cfg))
 
     # register hooks

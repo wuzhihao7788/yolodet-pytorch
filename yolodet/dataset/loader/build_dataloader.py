@@ -36,13 +36,30 @@ from torch.utils.data.dataloader import default_collate
 if platform.system() != 'Windows':
     # https://github.com/pytorch/pytorch/issues/973
     import resource
+
     rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
     hard_limit = rlimit[1]
     soft_limit = min(4096, hard_limit)
     resource.setrlimit(resource.RLIMIT_NOFILE, (soft_limit, hard_limit))
 
 
-def build_dataloader(dataset,data,shuffle=True,**kwargs):
+def collate(batch):
+    if len(batch) == 0:
+        return None
+    clt = defaultdict(list)
+    for i, dic in enumerate(batch):
+        clt['idx'].append(torch.tensor(i))
+        for k, v in dic.items():
+            clt[k].append(v)
+
+    for k, v in clt.items():
+        if isinstance(clt[k][0], torch.Tensor):
+            clt[k] = torch.stack(v, 0)
+    # collate = default_collate(batch)
+    return clt
+
+
+def build_dataloader(dataset, data, shuffle=True, **kwargs):
     """Build PyTorch DataLoader.
 
     In distributed training, each GPU/process has a dataloader.
@@ -63,7 +80,7 @@ def build_dataloader(dataset,data,shuffle=True,**kwargs):
     Returns:
         DataLoader: A PyTorch dataloader.
     """
-    batch_size = data.batch_size//data.subdivisions
+    batch_size = data.batch_size // data.subdivisions
     num_workers = min([os.cpu_count() // data.workers_per_gpu, batch_size if batch_size > 1 else 0, 8])
     # num_workers = data.workers_per_gpu
     data_loader = DataLoader(
@@ -77,18 +94,3 @@ def build_dataloader(dataset,data,shuffle=True,**kwargs):
         **kwargs)
 
     return data_loader
-import numpy as np
-def collate(batch):
-    if len(batch)==0:
-        return None
-    clt = defaultdict(list)
-    for i,dic in enumerate(batch):
-        clt['idx'].append(torch.tensor(i))
-        for k,v in dic.items():
-            clt[k].append(v)
-
-    for k,v in clt.items():
-        if isinstance(clt[k][0],torch.Tensor):
-            clt[k] = torch.stack(v, 0)
-    # collate = default_collate(batch)
-    return clt

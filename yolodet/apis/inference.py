@@ -24,20 +24,14 @@
 import json
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from PIL import Image
 from torch import nn
 
 from yolodet.utils.config import Config
-from yolodet.utils.registry import DETECTORS
-from yolodet.utils.newInstance_utils import build_from_dict
-from yolodet.apis.checkpoint import load_checkpoint
 from yolodet.dataset.pipelines.compose import Compose
 import cv2
-from tools.file_utils import mkdir_or_exist
-import os.path as osp
+from tools import mkdir_or_exist
 from yolodet.models.utils import torch_utils
 
 def init_detector(config, checkpoint=None, device='cuda:0'):

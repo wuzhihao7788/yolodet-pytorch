@@ -28,20 +28,20 @@ import os.path as osp
 import time
 import sys
 import os
+
 current_directory = os.path.dirname(os.path.abspath(__file__))
 root_path = os.path.abspath(os.path.dirname(current_directory) + os.path.sep + ".")
 sys.path.append(root_path)
 # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 import torch
 from yolodet.utils.config import Config
-from tools import file_utils
+from tools.file import file_utils
 from yolodet.utils.Logger import Logging
 from yolodet.utils.collect_env import collect_env
 from yolodet.utils.newInstance_utils import build_from_dict
-from yolodet.utils.registry import DETECTORS,DATASET
-from yolodet.apis.train import set_random_seed,train_detector
+from yolodet.utils.registry import DETECTORS, DATASET
+from yolodet.apis.train import set_random_seed, train_detector
 from yolodet.models.utils.torch_utils import select_device
-
 
 
 def parse_args():
@@ -56,9 +56,10 @@ def parse_args():
         help='whether to evaluate the checkpoint during training')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--seed', type=int, default=None, help='random seed')
-    parser.add_argument('--deterministic',action='store_true',help='whether to set deterministic options for CUDNN backend.')
-    parser.add_argument('--autoscale-lr',action='store_true',help='automatically scale lr with the number of gpus')
-    parser.add_argument('--multi-scale',action='store_true',help='vary img-size +/- 50%%')
+    parser.add_argument('--deterministic', action='store_true',
+                        help='whether to set deterministic options for CUDNN backend.')
+    parser.add_argument('--autoscale-lr', action='store_true', help='automatically scale lr with the number of gpus')
+    parser.add_argument('--multi-scale', action='store_true', help='vary img-size +/- 50%%')
     args = parser.parse_args()
     return args
 
@@ -84,7 +85,6 @@ def main():
         # apply the linear scaling rule (https://arxiv.org/abs/1706.02677)
         cfg.optimizer['lr'] = cfg.optimizer['lr'] * len(cfg.gpu_ids) / 8
 
-
     # create work_dir
     file_utils.mkdir_or_exist(osp.abspath(cfg.work_dir))
     # init the logger before other steps
@@ -100,7 +100,7 @@ def main():
     env_info = '\n'.join([('{}: {}'.format(k, v))
                           for k, v in env_info_dict.items()])
     dash_line = '-' * 60 + '\n'
-    logger.info('Environment info:\n' + dash_line + env_info + '\n' +dash_line)
+    logger.info('Environment info:\n' + dash_line + env_info + '\n' + dash_line)
     meta['env_info'] = env_info
     meta['batch_size'] = cfg.data.batch_size
     meta['subdivisions'] = cfg.data.subdivisions
@@ -137,7 +137,7 @@ def main():
     # add an attribute for visualization convenience
     model.CLASSES = datasets[0].CLASSES
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-    train_detector(model,datasets,cfg,validate=args.validate,timestamp=timestamp,meta=meta)
+    train_detector(model, datasets, cfg, validate=args.validate, timestamp=timestamp, meta=meta)
 
 
 if __name__ == '__main__':

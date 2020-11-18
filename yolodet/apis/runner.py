@@ -26,17 +26,16 @@
 # Copyright (c) Open-MMLab. All rights reserved.
 import os.path as osp
 import time
-from collections import OrderedDict
 from getpass import getuser
 from socket import gethostname
 
 from yolodet.apis.log_buffer import LogBuffer
-from yolodet.models.hooks.hook import Hook
-from yolodet.models.hooks.iter_timer_hook import IterTimerHook
+from yolodet.hooks.hook import Hook
+from yolodet.hooks.iter_timer_hook import IterTimerHook
 from yolodet.models.utils.torch_utils import ModelEMA
 from yolodet.utils.registry import HOOKS
 from yolodet.utils.newInstance_utils import obj_from_dict,build_from_dict
-from tools import file_utils
+from tools.file import file_utils
 from yolodet.utils.Logger import Logging
 from yolodet.apis.checkpoint import load_checkpoint,save_checkpoint
 
