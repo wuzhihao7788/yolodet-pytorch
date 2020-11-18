@@ -53,22 +53,3 @@ class YOLOv5Detector(BaseDetector):
                                              neck=neck,
                                              head=head,
                                              pretrained=pretrained)
-
-    def init_weights(self, pretrained=None):
-
-        super(YOLOv5Detector, self).init_weights(pretrained)
-        self.backbone.init_weights(pretrained=pretrained)
-
-        if self.with_neck:
-            if isinstance(self.neck, nn.Sequential):
-                for m in self.neck:
-                    m.init_weights()
-            else:
-                self.neck.init_weights()
-
-        if self.with_head:
-            if isinstance(self.head, nn.Sequential):
-                for m in self.head:
-                    m.init_weights()
-            else:
-                self.head.init_weights()

@@ -21,7 +21,6 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
-from torch import nn
 from yolodet.models.detectors.base import BaseDetector
 
 
@@ -37,22 +36,3 @@ class PPYOLODetector(BaseDetector):
                                              neck=neck,
                                              head=head,
                                              pretrained=pretrained)
-
-    def init_weights(self, pretrained=None):
-
-        super(PPYOLODetector, self).init_weights(pretrained)
-        self.backbone.init_weights(pretrained=pretrained)
-
-        if self.with_neck:
-            if isinstance(self.neck, nn.Sequential):
-                for m in self.neck:
-                    m.init_weights()
-            else:
-                self.neck.init_weights()
-
-        if self.with_head:
-            if isinstance(self.head, nn.Sequential):
-                for m in self.head:
-                    m.init_weights()
-            else:
-                self.head.init_weights()
