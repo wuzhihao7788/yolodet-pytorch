@@ -23,37 +23,48 @@
 =================================================='''
 
 import torch.nn as nn
-
-from yolodet.models.backbones.base import CSP_ResBock_Body, DarknetConv2D_Norm_Activation
-
 from yolodet.models.utils.torch_utils import initialize_weights
-
-arch_settings = {
-    53: (CSP_ResBock_Body, (1, 2, 8, 8, 4)),
-}
-
+from yolodet.models.backbones.base import CSP_ResBock_Body, DarknetConv2D_Norm_Activation
 
 
 class CSPDarknet(nn.Module):
-    def __init__(self, in_channels=3,planes=32, out_indices=(2, 3, 4,), depth=53,norm_type='BN',num_groups=32):
-        super(CSPDarknet,self).__init__()
+
+    arch_settings = {53: (CSP_ResBock_Body, (1, 2, 8, 8, 4)), }
+
+    def __init__(self,
+                 in_channels=3,
+                 planes=32,
+                 out_indices=(2, 3, 4,),
+                 depth=53,
+                 norm_type='BN',
+                 num_groups=32):
+
+        super(CSPDarknet, self).__init__()
         assert isinstance(depth, int)
-        assert norm_type in ('BN','GN'),'norm_type must BN or GN'
-        if depth not in arch_settings.keys():
+        assert norm_type in ('BN', 'GN'), 'norm_type must BN or GN'
+        if depth not in self.arch_settings.keys():
             depth = 53
         self.out_indices = out_indices
 
         self.norm_type = norm_type
         self.num_groups = num_groups
-        self.conv3x3 = DarknetConv2D_Norm_Activation(in_channels, planes, kernel_size=3, activation='mish',norm_type=self.norm_type,num_groups=self.num_groups)
+        self.conv3x3 = DarknetConv2D_Norm_Activation(in_channels,
+                                                     planes,
+                                                     kernel_size=3,
+                                                     activation='mish',
+                                                     norm_type=self.norm_type,
+                                                     num_groups=self.num_groups)
 
-        self.block, self.stage_blocks = arch_settings[depth]
+        self.block, self.stage_blocks = self.arch_settings[depth]
 
         self.csp_res_layers = []
         for i, num_blocks in enumerate(self.stage_blocks):
-            _planes = planes * 2**i
+            _planes = planes * 2 ** i
             layer_name = 'csp_res_layer_{}'.format(i + 1)
-            self.add_module(layer_name, self.block(in_channels=_planes, res_num=num_blocks,norm_type=self.norm_type,num_groups=self.num_groups))
+            self.add_module(layer_name, self.block(in_channels=_planes,
+                                                   res_num=num_blocks,
+                                                   norm_type=self.norm_type,
+                                                   num_groups=self.num_groups))
             self.csp_res_layers.append(layer_name)
 
         self.init_weights()
@@ -71,5 +82,5 @@ class CSPDarknet(nn.Module):
 
         return outs
 
-    def init_weights(self,pretrained=None):
+    def init_weights(self, pretrained=None):
         initialize_weights(self)

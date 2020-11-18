@@ -27,6 +27,7 @@ from tools.file import file_utils
 import torch
 from collections import OrderedDict
 
+
 def load_checkpoint(model,filename, strict=False, map_location='cpu'):
     logger = Logging.getLogger()
     logger.info('load checkpoint from %s', filename)

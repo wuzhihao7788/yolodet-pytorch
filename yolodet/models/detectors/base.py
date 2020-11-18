@@ -21,20 +21,16 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
-
-from abc import ABCMeta, abstractmethod
-
 import torch
 import torch.nn as nn
-
+from abc import ABCMeta, abstractmethod
 from yolodet.models.utils.torch_utils import scale_img
 
 
-class BaseDetector(nn.Module,metaclass=ABCMeta):
+class BaseDetector(nn.Module, metaclass=ABCMeta):
 
     def __init__(self):
-        super(BaseDetector,self).__init__()
-
+        super(BaseDetector, self).__init__()
 
     @property
     def with_neck(self):
@@ -52,8 +48,8 @@ class BaseDetector(nn.Module,metaclass=ABCMeta):
         if kwargs is not None and 'idx' in kwargs:
             idx = kwargs.pop('idx').cpu().numpy()
             img_metas = [img_metas[i] for i in idx]
-            for k,v in kwargs.items():
-                if isinstance(v,list):
+            for k, v in kwargs.items():
+                if isinstance(v, list):
                     kwargs[k] = [v[i] for i in idx]
         if return_loss:
             if img_metas is None or kwargs is None or not len(kwargs):
@@ -78,9 +74,12 @@ class BaseDetector(nn.Module,metaclass=ABCMeta):
                 else:
                     return self.forward_test(torch.cat(y, 1), img_metas, **kwargs)
             elif 'eval' in kwargs and kwargs['eval']:
-                return self.forward_eval(img,img_metas,**kwargs)
+                return self.forward_eval(img, img_metas, **kwargs)
 
-            return self.forward_test(self.forward_eval(img,img_metas,**kwargs)[0], img_metas, **kwargs)
+            results = self.forward_eval(img, img_metas, **kwargs)[0]
+            results = self.forward_test(results, img_metas, **kwargs)
+
+            return results
 
     @abstractmethod
     def forward_train(self, img, img_metas, **kwargs):
@@ -93,7 +92,6 @@ class BaseDetector(nn.Module,metaclass=ABCMeta):
     @abstractmethod
     def forward_eval(self, img, img_metas, **kwargs):
         pass
-
 
     @abstractmethod
     def forward_flops(self, img):

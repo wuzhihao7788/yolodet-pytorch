@@ -34,7 +34,7 @@ class Swish(nn.Module):
         return x * torch.sigmoid(x)
 
 
-class Mish(torch.nn.Module):
+class Mish(nn.Module):
     def __init__(self):
         super().__init__()
 
@@ -60,9 +60,12 @@ class DarknetConv2D_Norm_Activation(nn.Module):
         assert norm_type in (None, 'BN', 'GN'), 'norm type just support BN or GN'
         self.norm_type = norm_type
         self.darknetConv = nn.ModuleList()
-        self.darknetConv.add_module('conv', nn.Conv2d(in_channels, out_channels,
-                                                      kernel_size=kernel_size, stride=stride,
-                                                      padding=pad, bias=bias))
+        self.darknetConv.add_module('conv', nn.Conv2d(in_channels,
+                                                      out_channels,
+                                                      kernel_size=kernel_size, 
+                                                      stride=stride,
+                                                      padding=pad, 
+                                                      bias=bias))
         if norm_type == 'BN':
             self.darknetConv.add_module('bn', nn.BatchNorm2d(out_channels))
         elif norm_type == 'GN':
@@ -95,12 +98,16 @@ class ResBlock(nn.Module):
         super(ResBlock, self).__init__()
         self.norm_type = norm_type
         self.num_groups = num_groups
-        self.conv1x1 = DarknetConv2D_Norm_Activation(in_channels, out_channels,
-                                                     kernel_size=1, activation='mish',
+        self.conv1x1 = DarknetConv2D_Norm_Activation(in_channels, 
+                                                     out_channels,
+                                                     kernel_size=1, 
+                                                     activation='mish',
                                                      norm_type=self.norm_type,
                                                      num_groups=self.num_groups)
-        self.conv3x3 = DarknetConv2D_Norm_Activation(out_channels, in_channels,
-                                                     kernel_size=3, activation='mish',
+        self.conv3x3 = DarknetConv2D_Norm_Activation(out_channels, 
+                                                     in_channels,
+                                                     kernel_size=3, 
+                                                     activation='mish',
                                                      norm_type=self.norm_type,
                                                      num_groups=self.num_groups)
 
@@ -121,40 +128,69 @@ class CSP_ResBock_Body(nn.Module):
         self.norm_type = norm_type
         self.num_groups = num_groups
 
-        self.downsample = DarknetConv2D_Norm_Activation(self.in_channels, self.in_channels * 2, kernel_size=3, stride=2,
-                                                        norm_type=self.norm_type, num_groups=self.num_groups)
+        self.downsample = DarknetConv2D_Norm_Activation(self.in_channels,
+                                                        self.in_channels * 2,
+                                                        kernel_size=3,
+                                                        stride=2,
+                                                        norm_type=self.norm_type,
+                                                        num_groups=self.num_groups)
         if res_num == 1:
             # in_channels = 32
-            self.conv1x1_1 = DarknetConv2D_Norm_Activation(self.in_channels * 2, self.in_channels * 2, kernel_size=1,
-                                                           stride=1, norm_type=self.norm_type,
+            self.conv1x1_1 = DarknetConv2D_Norm_Activation(self.in_channels * 2,
+                                                           self.in_channels * 2,
+                                                           kernel_size=1,
+                                                           stride=1,
+                                                           norm_type=self.norm_type,
                                                            num_groups=self.num_groups)
             resBlocks = self.make_res_blocks(channels=self.in_channels * 2, res_num=self.res_num)
-            self.conv1x1_4 = DarknetConv2D_Norm_Activation(self.in_channels * 2, self.in_channels * 2, kernel_size=1,
-                                                           stride=1, norm_type=self.norm_type,
-                                                           num_groups=self.num_groups)
-            self.conv1x1_2 = DarknetConv2D_Norm_Activation(self.in_channels * 2, self.in_channels * 2, kernel_size=1,
-                                                           stride=1, norm_type=self.norm_type,
-                                                           num_groups=self.num_groups)
-            self.conv1x1_3 = DarknetConv2D_Norm_Activation(self.in_channels * 2 * 2, self.in_channels * 2,
+            self.conv1x1_4 = DarknetConv2D_Norm_Activation(self.in_channels * 2,
+                                                           self.in_channels * 2,
                                                            kernel_size=1,
-                                                           stride=1, norm_type=self.norm_type,
+                                                           stride=1,
+                                                           norm_type=self.norm_type,
+                                                           num_groups=self.num_groups)
+            self.conv1x1_2 = DarknetConv2D_Norm_Activation(self.in_channels * 2,
+                                                           self.in_channels * 2,
+                                                           kernel_size=1,
+                                                           stride=1,
+                                                           norm_type=self.norm_type,
+                                                           num_groups=self.num_groups)
+            self.conv1x1_3 = DarknetConv2D_Norm_Activation(self.in_channels * 2 * 2,
+                                                           self.in_channels * 2,
+                                                           kernel_size=1,
+                                                           stride=1,
+                                                           norm_type=self.norm_type,
                                                            num_groups=self.num_groups)
         else:
             # in_channels = 64
-            self.conv1x1_1 = DarknetConv2D_Norm_Activation(self.in_channels * 2, self.in_channels, kernel_size=1,
-                                                           stride=1, norm_type=self.norm_type,
+            self.conv1x1_1 = DarknetConv2D_Norm_Activation(self.in_channels * 2, 
+                                                           self.in_channels, 
+                                                           kernel_size=1,
+                                                           stride=1, 
+                                                           norm_type=self.norm_type,
                                                            num_groups=self.num_groups)
-            self.conv1x1_4 = DarknetConv2D_Norm_Activation(self.in_channels * 2, self.in_channels, kernel_size=1,
-                                                           stride=1, norm_type=self.norm_type,
+            self.conv1x1_4 = DarknetConv2D_Norm_Activation(self.in_channels * 2, 
+                                                           self.in_channels, 
+                                                           kernel_size=1,
+                                                           stride=1, 
+                                                           norm_type=self.norm_type,
                                                            num_groups=self.num_groups)
-            self.conv1x1_2 = DarknetConv2D_Norm_Activation(self.in_channels, self.in_channels, kernel_size=1,
-                                                           stride=1, norm_type=self.norm_type,
+            self.conv1x1_2 = DarknetConv2D_Norm_Activation(self.in_channels,
+                                                           self.in_channels, 
+                                                           kernel_size=1,
+                                                           stride=1, 
+                                                           norm_type=self.norm_type,
                                                            num_groups=self.num_groups)
-            self.conv1x1_3 = DarknetConv2D_Norm_Activation(self.in_channels * 2, self.in_channels * 2, kernel_size=1,
-                                                           stride=1, norm_type=self.norm_type,
+            self.conv1x1_3 = DarknetConv2D_Norm_Activation(self.in_channels * 2, 
+                                                           self.in_channels * 2, 
+                                                           kernel_size=1,
+                                                           stride=1, 
+                                                           norm_type=self.norm_type,
                                                            num_groups=self.num_groups)
             resBlocks = self.make_res_blocks(channels=self.in_channels, res_num=self.res_num)
+
         self.res_block_layers = []
+
         for i, resBlock in enumerate(resBlocks):
             layer_name = 'res_block_layer_{}'.format(i + 1)
             self.add_module(layer_name, resBlock)
@@ -179,37 +215,73 @@ class CSP_ResBock_Body(nn.Module):
     def make_res_blocks(self, channels, res_num):
         res_blocks = []
         if res_num == 1:
-            res_blocks.append(
-                ResBlock(channels, int(channels / 2), norm_type=self.norm_type, num_groups=self.num_groups))
+            res_blocks.append(ResBlock(channels,
+                                       int(channels / 2),
+                                       norm_type=self.norm_type,
+                                       num_groups=self.num_groups))
         else:
             for i in range(res_num):
-                res_blocks.append(ResBlock(channels, channels, norm_type=self.norm_type, num_groups=self.num_groups))
+                res_blocks.append(ResBlock(channels,
+                                           channels,
+                                           norm_type=self.norm_type,
+                                           num_groups=self.num_groups))
+
         return nn.Sequential(*res_blocks)
 
 
 class Focus(nn.Module):
     # Focus wh information into c-space
-    def __init__(self, in_channels=3, out_channels=80, kernel_size=3, stride=1, activation='leaky', norm_type='BN',
-                 num_groups=None):  # ch_in, ch_out, kernel, stride, padding, groups
+    def __init__(self,
+                 in_channels=3,
+                 out_channels=80,
+                 kernel_size=3,
+                 stride=1,
+                 activation='leaky',
+                 norm_type='BN',
+                 num_groups=None):
+
         super(Focus, self).__init__()
-        self.conv = DarknetConv2D_Norm_Activation(in_channels * 4, out_channels, kernel_size=kernel_size, stride=stride,
-                                                  activation=activation, norm_type=norm_type, num_groups=num_groups)
+        self.conv = DarknetConv2D_Norm_Activation(in_channels * 4,
+                                                  out_channels,
+                                                  kernel_size=kernel_size,
+                                                  stride=stride,
+                                                  activation=activation,
+                                                  norm_type=norm_type,
+                                                  num_groups=num_groups)
 
-    def forward(self, x):  # x(b,c,w,h) -> y(b,4c,w/2,h/2)
-        return self.conv(torch.cat([x[..., ::2, ::2], x[..., 1::2, ::2], x[..., ::2, 1::2], x[..., 1::2, 1::2]], 1))
+    def forward(self, x):
+        """
+        # x(b,c,w,h) -> y(b,4c,w/2,h/2)
+        """
+        return self.conv(torch.cat([x[..., ::2, ::2], x[..., 1::2, ::2],
+                                    x[..., ::2, 1::2], x[..., 1::2, 1::2]], 1))
 
 
+# CSP Bottleneck https://github.com/WongKinYiu/CrossStagePartialNetworks
 class BottleneckCSP(nn.Module):
-    # CSP Bottleneck https://github.com/WongKinYiu/CrossStagePartialNetworks
-    def __init__(self, c1, c2, n=1, shortcut=True, g=1, e=0.5, activation='leaky', norm_type='BN',
-                 num_groups=None):  # ch_in, ch_out, number, shortcut, groups, expansion
+
+    def __init__(self,
+                 c1,
+                 c2,
+                 n=1,
+                 shortcut=True,
+                 g=1,
+                 e=0.5,
+                 activation='leaky',
+                 norm_type='BN',
+                 num_groups=None):
+
         super(BottleneckCSP, self).__init__()
         c_ = int(c2 * e)  # hidden channels 80
-        self.cv1 = DarknetConv2D_Norm_Activation(c1, c_, 1, 1, activation=activation, norm_type=norm_type,
+        self.cv1 = DarknetConv2D_Norm_Activation(c1, c_, 1, 1,
+                                                 activation=activation,
+                                                 norm_type=norm_type,
                                                  num_groups=num_groups)  # 160 80
         self.cv2 = nn.Conv2d(c1, c_, 1, 1, bias=False)  # 160 80
         self.cv3 = nn.Conv2d(c_, c_, 1, 1, bias=False)  # 80 80
-        self.cv4 = DarknetConv2D_Norm_Activation(2 * c_, c2, 1, 1, activation=activation, norm_type=norm_type,
+        self.cv4 = DarknetConv2D_Norm_Activation(2 * c_, c2, 1, 1,
+                                                 activation=activation,
+                                                 norm_type=norm_type,
                                                  num_groups=num_groups)  # 160 160
         self.bn = nn.BatchNorm2d(2 * c_)  # applied to cat(cv2, cv3) 160
         self.act = nn.LeakyReLU(0.1, inplace=True)
@@ -223,13 +295,24 @@ class BottleneckCSP(nn.Module):
 
 class Bottleneck(nn.Module):
     # Standard bottleneck
-    def __init__(self, c1, c2, shortcut=True, e=0.5, activation='leaky', norm_type='BN',
+    def __init__(self,
+                 c1,
+                 c2,
+                 shortcut=True,
+                 e=0.5,
+                 activation='leaky',
+                 norm_type='BN',
                  num_groups=None):  # ch_in, ch_out, shortcut, groups, expansion
+
         super(Bottleneck, self).__init__()
         c_ = int(c2 * e)  # hidden channels
-        self.cv1 = DarknetConv2D_Norm_Activation(c1, c_, 1, 1, activation=activation, norm_type=norm_type,
+        self.cv1 = DarknetConv2D_Norm_Activation(c1, c_, 1, 1,
+                                                 activation=activation,
+                                                 norm_type=norm_type,
                                                  num_groups=num_groups)
-        self.cv2 = DarknetConv2D_Norm_Activation(c_, c2, 3, 1, activation=activation, norm_type=norm_type,
+        self.cv2 = DarknetConv2D_Norm_Activation(c_, c2, 3, 1,
+                                                 activation=activation,
+                                                 norm_type=norm_type,
                                                  num_groups=num_groups)
         self.add = shortcut and c1 == c2
 
