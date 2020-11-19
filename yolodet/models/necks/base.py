@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''=================================================
+"""=================================================
 # @Time    : 2020/7/25 14:39
 # @Author  : wuzhihao
 # @email   : 753993117@qq.com
@@ -20,24 +20,36 @@
                 ┗┓┓┏━┳┓┏┛
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
-=================================================='''
-import torch.nn as nn
+=================================================="""
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
-
 from yolodet.models.backbones.base import DarknetConv2D_Norm_Activation
 
 
 class YOLO_SAM_Module(nn.Module):
-    def __init__(self,in_channels,out_channels,norm_type='BN',num_groups=None):
-        super(YOLO_SAM_Module,self).__init__()
-        self.conv1x1 = DarknetConv2D_Norm_Activation(in_channels,out_channels, kernel_size=1, activation='logistic',norm_type=norm_type,num_groups=num_groups)
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 norm_type='BN',
+                 num_groups=None):
+        super(YOLO_SAM_Module, self).__init__()
+        self.conv1x1 = DarknetConv2D_Norm_Activation(in_channels,
+                                                     out_channels,
+                                                     kernel_size=1,
+                                                     activation='logistic',
+                                                     norm_type=norm_type,
+                                                     num_groups=num_groups)
 
-    def forward(self,x):
-        return self.conv1x1(x)* x
+    def forward(self, x):
+        return self.conv1x1(x) * x
 
 
-def make_DBL_cluster(in_channels, cluster_num=3,norm_type='BN',num_groups=None,sam=False):
+def make_DBL_cluster(in_channels,
+                     cluster_num=3,
+                     norm_type='BN',
+                     num_groups=None,
+                     sam=False):
     clusters = []
     assert isinstance(cluster_num, int)
     assert cluster_num in [3, 5]
@@ -45,67 +57,106 @@ def make_DBL_cluster(in_channels, cluster_num=3,norm_type='BN',num_groups=None,s
 
         if i % 2 == 1:
             kernel_size = 3
-            in_c = in_channels//2
+            in_c = in_channels // 2
             out_c = in_channels
         else:
             kernel_size = 1
             in_c = in_channels
-            out_c = in_channels//2
-        if sam and i+1 == cluster_num:
-            clusters.append(YOLO_SAM_Module(in_c, in_c,norm_type=norm_type, num_groups=num_groups))
-        clusters.append(DarknetConv2D_Norm_Activation(in_c, out_c, kernel_size=kernel_size, activation='leaky',norm_type=norm_type,num_groups=num_groups))
+            out_c = in_channels // 2
+        if sam and i + 1 == cluster_num:
+            clusters.append(YOLO_SAM_Module(in_c, in_c, norm_type=norm_type, num_groups=num_groups))
+        clusters.append(
+            DarknetConv2D_Norm_Activation(in_c, out_c,
+                                          kernel_size=kernel_size,
+                                          activation='leaky',
+                                          norm_type=norm_type,
+                                          num_groups=num_groups))
     return clusters
 
+
 class UpSampleModule(nn.Module):
-    def __init__(self,in_channels,norm_type='BN',num_groups=None,sam=False):
-        super(UpSampleModule,self).__init__()
-        self.conv1x1_1 = DarknetConv2D_Norm_Activation(in_channels, in_channels // 2, kernel_size=1, activation='leaky',norm_type=norm_type,num_groups=num_groups)
-        self.conv1x1_2 = DarknetConv2D_Norm_Activation(in_channels, in_channels // 2, kernel_size=1, activation='leaky',norm_type=norm_type,num_groups=num_groups)
-        dbl_clusters = make_DBL_cluster(in_channels,cluster_num=5,norm_type=norm_type,num_groups=num_groups,sam=sam)
+    def __init__(self,
+                 in_channels,
+                 norm_type='BN',
+                 num_groups=None,
+                 sam=False):
+        super(UpSampleModule, self).__init__()
+        self.conv1x1_1 = DarknetConv2D_Norm_Activation(in_channels,
+                                                       in_channels // 2,
+                                                       kernel_size=1,
+                                                       activation='leaky',
+                                                       norm_type=norm_type,
+                                                       num_groups=num_groups)
+        self.conv1x1_2 = DarknetConv2D_Norm_Activation(in_channels,
+                                                       in_channels // 2,
+                                                       kernel_size=1,
+                                                       activation='leaky',
+                                                       norm_type=norm_type,
+                                                       num_groups=num_groups)
+        dbl_clusters = make_DBL_cluster(in_channels,
+                                        cluster_num=5,
+                                        norm_type=norm_type,
+                                        num_groups=num_groups,
+                                        sam=sam)
         self.dbl_cluster_layers = []
-        for i ,dbl in enumerate(dbl_clusters):
+        for i, dbl in enumerate(dbl_clusters):
             layer_name = 'dbl_cluster_layer_{}'.format(i + 1)
-            self.add_module(layer_name,dbl)
+            self.add_module(layer_name, dbl)
             self.dbl_cluster_layers.append(layer_name)
 
-    def forward(self,x):
+    def forward(self, x):
         x1 = x[0]
         x2 = x[1]
         x1 = self.conv1x1_1(x1)
         x2 = self.conv1x1_2(x2)
         x1 = F.interpolate(x1, scale_factor=2, mode='nearest')
-        out = torch.cat([x1,x2],dim=1)
+        out = torch.cat([x1, x2], dim=1)
         for layer_name in self.dbl_cluster_layers:
             dbl_cluster = getattr(self, layer_name)
             out = dbl_cluster(out)
         return out
 
+
 class DownSampleModule(nn.Module):
-    def __init__(self,in_channels,norm_type='BN',num_groups=0,sam=False):
-        super(DownSampleModule,self).__init__()
-        self.conv3x3 = DarknetConv2D_Norm_Activation(in_channels, in_channels * 2, kernel_size=3, stride=2, activation='leaky',norm_type=norm_type,num_groups=num_groups)
-        dbl_clusters = make_DBL_cluster(in_channels*4,cluster_num=5,norm_type=norm_type,num_groups=num_groups,sam=sam)
+    def __init__(self,
+                 in_channels,
+                 norm_type='BN',
+                 num_groups=0,
+                 sam=False):
+        super(DownSampleModule, self).__init__()
+        self.conv3x3 = DarknetConv2D_Norm_Activation(in_channels,
+                                                     in_channels * 2,
+                                                     kernel_size=3,
+                                                     stride=2,
+                                                     activation='leaky',
+                                                     norm_type=norm_type,
+                                                     num_groups=num_groups)
+        dbl_clusters = make_DBL_cluster(in_channels * 4,
+                                        cluster_num=5,
+                                        norm_type=norm_type,
+                                        num_groups=num_groups,
+                                        sam=sam)
         self.dbl_cluster_layers = []
-        for i ,dbl in enumerate(dbl_clusters):
+        for i, dbl in enumerate(dbl_clusters):
             layer_name = 'dbl_cluster_layer_{}'.format(i + 1)
-            self.add_module(layer_name,dbl)
+            self.add_module(layer_name, dbl)
             self.dbl_cluster_layers.append(layer_name)
 
-    def forward(self,x):
+    def forward(self, x):
         x1 = x[0]
         x2 = x[1]
         x2 = self.conv3x3(x2)
-        out = torch.cat([x1,x2],dim=1)
+        out = torch.cat([x1, x2], dim=1)
         for dbl_name in self.dbl_cluster_layers:
-            dbl = getattr(self,dbl_name)
+            dbl = getattr(self, dbl_name)
             out = dbl(out)
         return out
 
 
 class SPP(nn.Module):
-    def __init__(self,kernel_sizes=[5, 9, 13]):
+    def __init__(self, kernel_sizes=[5, 9, 13]):
 
-        super(SPP,self).__init__()
+        super(SPP, self).__init__()
         max_pool_cluster = self.make_max_pool_cluster(kernel_sizes)
 
         self.max_pool_cluster_layers = []
@@ -118,7 +169,9 @@ class SPP(nn.Module):
         clusters = []
         for kernel_size in kernel_sizes:
             pad = kernel_size // 2
-            clusters.append(nn.MaxPool2d(kernel_size=kernel_size, stride=1, padding=pad))
+            clusters.append(nn.MaxPool2d(kernel_size=kernel_size,
+                                         stride=1,
+                                         padding=pad))
         return clusters
 
     def forward(self, x):
@@ -127,29 +180,46 @@ class SPP(nn.Module):
             max_pool = getattr(self, max_pool_name)
             outs.append(max_pool(x))
         outs.append(x)
-        out = torch.cat(outs,dim=1)
+        out = torch.cat(outs, dim=1)
         return out
 
 
 class YOLO_SPP(nn.Module):
 
-    def __init__(self,in_channels,kernel_sizes=[5, 9, 13],norm_type='BN',num_groups=None):
-        super(YOLO_SPP,self).__init__()
-        dbl_cluster_3_1 = make_DBL_cluster(in_channels, cluster_num=3,norm_type=norm_type,num_groups=num_groups)
+    def __init__(self,
+                 in_channels,
+                 kernel_sizes=[5, 9, 13],
+                 norm_type='BN',
+                 num_groups=None):
+        super(YOLO_SPP, self).__init__()
+        dbl_cluster_3_1 = make_DBL_cluster(in_channels,
+                                           cluster_num=3,
+                                           norm_type=norm_type,
+                                           num_groups=num_groups)
         self.dbl_cluster_3_1_layers = []
-        for i ,dbl in enumerate(dbl_cluster_3_1):
+        for i, dbl in enumerate(dbl_cluster_3_1):
             layer_name = 'dbl_cluster_3_1_layer_{}'.format(i + 1)
-            self.add_module(layer_name,dbl)
+            self.add_module(layer_name, dbl)
             self.dbl_cluster_3_1_layers.append(layer_name)
 
         dbl_cluster_3_2 = [
-            DarknetConv2D_Norm_Activation(in_channels * 2, in_channels // 2, kernel_size=1, activation='leaky',
-                                          norm_type=norm_type, num_groups=num_groups),
-            DarknetConv2D_Norm_Activation(in_channels // 2, in_channels, kernel_size=3, activation='leaky',
-                                          norm_type=norm_type, num_groups=num_groups),
-            DarknetConv2D_Norm_Activation(in_channels, in_channels // 2, kernel_size=1, activation='leaky',
-                                          norm_type=norm_type, num_groups=num_groups)
-        ]
+            DarknetConv2D_Norm_Activation(in_channels * 2,
+                                          in_channels // 2,
+                                          kernel_size=1,
+                                          activation='leaky',
+                                          norm_type=norm_type,
+                                          num_groups=num_groups),
+            DarknetConv2D_Norm_Activation(in_channels // 2, in_channels,
+                                          kernel_size=3,
+                                          activation='leaky',
+                                          norm_type=norm_type,
+                                          num_groups=num_groups),
+            DarknetConv2D_Norm_Activation(in_channels,
+                                          in_channels // 2,
+                                          kernel_size=1,
+                                          activation='leaky',
+                                          norm_type=norm_type,
+                                          num_groups=num_groups)]
 
         self.dbl_cluster_3_2_layers = []
         for i, dbl in enumerate(dbl_cluster_3_2):
@@ -160,29 +230,29 @@ class YOLO_SPP(nn.Module):
         max_pool_cluster = self.make_max_pool_cluster(kernel_sizes)
 
         self.max_pool_cluster_layers = []
-        for i ,mpc in enumerate(max_pool_cluster):
+        for i, mpc in enumerate(max_pool_cluster):
             layer_name = 'max_pool_cluster_{}'.format(i + 1)
-            self.add_module(layer_name,mpc)
+            self.add_module(layer_name, mpc)
             self.max_pool_cluster_layers.append(layer_name)
 
-
-    def make_max_pool_cluster(self,kernel_sizes):
+    def make_max_pool_cluster(self, kernel_sizes):
         clusters = []
         for kernel_size in kernel_sizes:
-            pad = kernel_size//2
-            clusters.append(nn.MaxPool2d(kernel_size=kernel_size,stride=1,padding=pad))
+            pad = kernel_size // 2
+            clusters.append(nn.MaxPool2d(kernel_size=kernel_size,
+                                         stride=1, padding=pad))
         return clusters
 
-    def forward(self,x):
+    def forward(self, x):
         for dbl_name in self.dbl_cluster_3_1_layers:
-            dbl = getattr(self,dbl_name)
+            dbl = getattr(self, dbl_name)
             x = dbl(x)
         outs = []
         for max_pool_name in self.max_pool_cluster_layers:
             max_pool = getattr(self, max_pool_name)
             outs.append(max_pool(x))
         outs.append(x)
-        out = torch.cat(outs,dim=1)
+        out = torch.cat(outs, dim=1)
         for dbl_name in self.dbl_cluster_3_2_layers:
             dbl = getattr(self, dbl_name)
             out = dbl(out)
@@ -192,6 +262,8 @@ class YOLO_SPP(nn.Module):
 '''
 An alternative implementation for PyTorch with auto-infering the x-y dimensions.
 '''
+
+
 class AddCoords(nn.Module):
 
     def __init__(self, with_r=False):
@@ -223,7 +295,8 @@ class AddCoords(nn.Module):
             yy_channel.type_as(input_tensor)], dim=1)
 
         if self.with_r:
-            rr = torch.sqrt(torch.pow(xx_channel.type_as(input_tensor) - 0.5, 2) + torch.pow(yy_channel.type_as(input_tensor) - 0.5, 2))
+            rr = torch.sqrt(torch.pow(xx_channel.type_as(input_tensor) - 0.5, 2)
+                            + torch.pow(yy_channel.type_as(input_tensor) - 0.5, 2))
             ret = torch.cat([ret, rr], dim=1)
 
         return ret
@@ -231,7 +304,15 @@ class AddCoords(nn.Module):
 
 class CoordConv(nn.Module):
 
-    def __init__(self, in_channels, out_channels,kernel_size=1, with_r=False,activation='leaky',norm_type='BN',num_groups=None,coord_conv=True):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 kernel_size=1,
+                 with_r=False,
+                 activation='leaky',
+                 norm_type='BN',
+                 num_groups=None, coord_conv=True):
+
         super().__init__()
         self.coord_conv = coord_conv
         if self.coord_conv:
@@ -240,13 +321,18 @@ class CoordConv(nn.Module):
             in_channels += 2
             if with_r:
                 in_channels += 1
-        self.conv = DarknetConv2D_Norm_Activation(in_channels, out_channels, kernel_size=kernel_size, activation=activation,norm_type=norm_type,num_groups=num_groups)
-
+        self.conv = DarknetConv2D_Norm_Activation(in_channels,
+                                                  out_channels,
+                                                  kernel_size=kernel_size,
+                                                  activation=activation,
+                                                  norm_type=norm_type,
+                                                  num_groups=num_groups)
 
     def forward(self, x):
+
         if self.coord_conv:
             x = self.addcoords(x)
-        # ret = x
+
         x = self.conv(x)
         return x
 
@@ -270,7 +356,7 @@ class DropBlock2D(nn.Module):
     def __init__(self, keep_prob=0.9, block_size=7):
         super(DropBlock2D, self).__init__()
 
-        self.drop_prob = 1-keep_prob
+        self.drop_prob = 1 - keep_prob
         self.block_size = block_size
 
     def forward(self, x):
@@ -318,10 +404,6 @@ class DropBlock2D(nn.Module):
     def _compute_gamma(self, x):
         return self.drop_prob / (self.block_size ** 2)
 
-# if __name__ == '__main__':
-#     input = torch.rand(1,3,512,512)
-#     ccon = CoordConv(3,6,kernel_size=3)
-#     ccon.forward(input)
 
 class Concat(nn.Module):
     # Concatenate a list of tensors along dimension
@@ -331,5 +413,3 @@ class Concat(nn.Module):
 
     def forward(self, x):
         return torch.cat(x, self.d)
-
-

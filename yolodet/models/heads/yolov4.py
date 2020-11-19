@@ -21,15 +21,28 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
-from yolodet.models.heads.yolo import BaseHead
 from yolodet.models.heads.base import Y
+from yolodet.models.heads.yolo import BaseHead
+
+
 class YOLOv4Head(BaseHead):
 
-    def __init__(self,**kwargs):
+    def __init__(self, **kwargs):
         super(YOLOv4Head, self).__init__(**kwargs)
-        self.y1 = Y(self.in_channels[-1], self.out_channels[0],norm_type=self.norm_type,num_groups=self.num_groups)
-        self.y2 = Y(self.in_channels[-2], self.out_channels[1],norm_type=self.norm_type,num_groups=self.num_groups)
-        self.y3 = Y(self.in_channels[-3], self.out_channels[2],norm_type=self.norm_type,num_groups=self.num_groups)
+        self.y1 = Y(self.in_channels[-1],
+                    self.out_channels[0],
+                    norm_type=self.norm_type,
+                    num_groups=self.num_groups)
+
+        self.y2 = Y(self.in_channels[-2],
+                    self.out_channels[1],
+                    norm_type=self.norm_type,
+                    num_groups=self.num_groups)
+
+        self.y3 = Y(self.in_channels[-3],
+                    self.out_channels[2],
+                    norm_type=self.norm_type,
+                    num_groups=self.num_groups)
 
     def forward(self, x):
         # x.size = 3 The last three predict layers

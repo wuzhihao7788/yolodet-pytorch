@@ -22,23 +22,33 @@
                   ┗┻┛  ┗┻┛
 =================================================='''
 import time
-
+import torch
+import torchvision
 import numpy as np
 from torch import nn
-import torchvision
-
-from yolodet.models.backbones.base import DarknetConv2D_Norm_Activation
 from yolodet.models.loss.base import box_iou
+from yolodet.models.backbones.base import DarknetConv2D_Norm_Activation
 
 
 class Y(nn.Module):
-    def __init__(self, in_channels, out_channels,activation='leaky',norm_type='BN',num_groups=None):
+    def __init__(self,
+                 in_channels,
+                 out_channels,
+                 activation='leaky',
+                 norm_type='BN',
+                 num_groups=None):
         super(Y, self).__init__()
         self.norm_type = norm_type
         self.num_groups = num_groups
-        self.conv3x3 = DarknetConv2D_Norm_Activation(in_channels, in_channels * 2, 3, 1, activation=activation,norm_type=norm_type,num_groups=num_groups)
-        self.liner = DarknetConv2D_Norm_Activation(in_channels * 2, out_channels, 1, 1, activation='linear', norm_type=None,bias=True)
-        # self.liner = nn.Linear(in_channels * 2, out_channels)
+        self.conv3x3 = DarknetConv2D_Norm_Activation(in_channels,
+                                                     in_channels * 2, 3, 1,
+                                                     activation=activation,
+                                                     norm_type=norm_type,
+                                                     num_groups=num_groups)
+        self.liner = DarknetConv2D_Norm_Activation(in_channels * 2,
+                                                   out_channels, 1, 1,
+                                                   activation='linear',
+                                                   norm_type=None, bias=True)
 
     def forward(self, x):
         x = self.conv3x3(x)
@@ -47,7 +57,13 @@ class Y(nn.Module):
 
 
 def xyxy2xywh(x):
-    # Convert nx4 boxes from [x1, y1, x2, y2] to [x, y, w, h] where xy1=top-left, xy2=bottom-right
+    """
+    xyxy -> xywh
+    Args:
+        x: xyxy
+    Returns:
+        y: xywh
+    """
     y = torch.zeros_like(x) if isinstance(x, torch.Tensor) else np.zeros_like(x)
     y[:, 0] = (x[:, 0] + x[:, 2]) / 2  # x center
     y[:, 1] = (x[:, 1] + x[:, 3]) / 2  # y center
@@ -57,7 +73,13 @@ def xyxy2xywh(x):
 
 
 def xywh2xyxy(x):
-    # Convert nx4 boxes from [x, y, w, h] to [x1, y1, x2, y2] where xy1=top-left, xy2=bottom-right
+    """
+    xywh->xyxy
+    Args:
+        x: xywh
+    Returns:
+        y: xyxy
+    """
     y = torch.zeros_like(x) if isinstance(x, torch.Tensor) else np.zeros_like(x)
     y[:, 0] = x[:, 0] - x[:, 2] / 2  # top left x
     y[:, 1] = x[:, 1] - x[:, 3] / 2  # top left y
@@ -69,8 +91,10 @@ def xywh2xyxy(x):
 def scale_coords(img1_shape, coords, img0_shape, ratio_pad=None):
     # Rescale coords (xyxy) from img1_shape to img0_shape
     if ratio_pad is None:  # calculate from img0_shape
-        gain = min(img1_shape[0] / img0_shape[0], img1_shape[1] / img0_shape[1])  # gain  = old / new
-        pad = (img1_shape[1] - img0_shape[1] * gain) / 2, (img1_shape[0] - img0_shape[0] * gain) / 2  # wh padding
+        gain = min(img1_shape[0] / img0_shape[0],
+                   img1_shape[1] / img0_shape[1])  # gain  = old / new
+        pad = (img1_shape[1] - img0_shape[1] * gain) / 2, \
+              (img1_shape[0] - img0_shape[0] * gain) / 2  # wh padding
     else:
         gain = ratio_pad[0][0]
         pad = ratio_pad[1]
@@ -90,8 +114,7 @@ def clip_coords(boxes, img_shape):
     boxes[:, 3].clamp_(0, img_shape[0])  # y2
 
 
-
-def nms_cpu(boxes, confs,xyxy=True, nms_thresh=0.5, min_mode=False):
+def nms_cpu(boxes, confs, xyxy=True, nms_thresh=0.5, min_mode=False):
     # print(boxes.shape)
     if xyxy:
         x1 = boxes[:, 0]
@@ -133,7 +156,8 @@ def nms_cpu(boxes, confs,xyxy=True, nms_thresh=0.5, min_mode=False):
 
     return np.array(keep)
 
-def soft_nms_cpu(boxes, confs,xyxy=True, nms_thresh=0.3, sigma=0.5, thresh=0.001, method=2):
+
+def soft_nms_cpu(boxes, confs, xyxy=True, nms_thresh=0.3, sigma=0.5, thresh=0.001, method=2):
     """
     soft_nms_cpu
     :param boxes:   boexs 坐标矩阵 format [y1, x1, y2, x2]
@@ -175,7 +199,7 @@ def soft_nms_cpu(boxes, confs,xyxy=True, nms_thresh=0.3, sigma=0.5, thresh=0.001
         pos = i + 1
 
         #
-        if i != N-1:
+        if i != N - 1:
             maxscore = np.max(scores[pos:], axis=0)
             maxpos = np.argmax(scores[pos:], axis=0)
         else:
@@ -222,9 +246,6 @@ def soft_nms_cpu(boxes, confs,xyxy=True, nms_thresh=0.3, sigma=0.5, thresh=0.001
     keep = inds.astype(int)
 
     return np.array(keep)
-
-
-import torch
 
 
 def soft_nms_pytorch(dets, box_scores, sigma=0.5, thresh=0.001, cuda=1):

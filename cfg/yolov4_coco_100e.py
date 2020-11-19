@@ -43,7 +43,7 @@ model = dict(
 )
 
 # dataset settings
-img_scale = 604  # 图片缩放尺度
+img_scale = 416  # 图片缩放尺度
 train_pipeline = [
     dict(
         type='Mosaic',  # Mosaic
@@ -79,7 +79,7 @@ dataset_type = 'Custom'
 data_root = '/home/cxj/Desktop/data/coco'
 data = dict(
     batch_size=8,
-    subdivisions=4,
+    subdivisions=2,
     workers_per_gpu=1,
     train=dict(
         type=dataset_type,

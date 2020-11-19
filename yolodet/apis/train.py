@@ -133,7 +133,8 @@ def train_detector(model, dataset, cfg, validate=False, timestamp=None, meta=Non
         ema = cfg.ema
     else:
         ema = None
-    runner = Runner(model, batch_processor, optimizer, cfg.work_dir, logger=logger, meta=meta, ema=ema)
+    runner = Runner(model, batch_processor, optimizer,
+                    cfg.work_dir, logger=logger, meta=meta, ema=ema)
     # an ugly walkaround to make the .log and .log.json filenames the same
     runner.timestamp = timestamp
 
@@ -147,8 +148,10 @@ def train_detector(model, dataset, cfg, validate=False, timestamp=None, meta=Non
         runner.register_hook(EvalHook(val_dataloader, **eval_cfg))
 
     # register hooks
-    # runner.register_training_hooks(cfg.lr_config, cfg.optimizer_config,cfg.checkpoint_config)
-    runner.register_training_hooks(cfg.lr_config, cfg.optimizer_config, cfg.checkpoint_config, cfg.log_config)
+    runner.register_training_hooks(cfg.lr_config,
+                                   cfg.optimizer_config,
+                                   cfg.checkpoint_config,
+                                   cfg.log_config)
 
     if cfg.resume_from:
         runner.resume(cfg.resume_from)

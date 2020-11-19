@@ -80,7 +80,8 @@ def single_gpu_test(model,
         for i, gtb in enumerate(gt_bbox):
             gtc = torch.from_numpy(gt_class[i]).to(device)
             img_idx = torch.ones(len(gtb), 1, device=device) * i
-            targets = torch.cat([targets, torch.cat((img_idx, gtc, torch.from_numpy(gtb).to(device)), dim=-1)])
+            img_idx = torch.cat((img_idx, gtc, torch.from_numpy(gtb).to(device)), dim=-1)
+            targets = torch.cat([targets, img_idx])
 
             # Disable gradients
         with torch.no_grad():
@@ -94,7 +95,10 @@ def single_gpu_test(model,
 
             # Run NMS
             t = torch_utils.time_synchronized()
-            output = non_max_suppression(inf_out, conf_thres=conf_thres, iou_thres=iou_thres, merge=merge)
+            output = non_max_suppression(inf_out,
+                                         conf_thres=conf_thres,
+                                         iou_thres=iou_thres,
+                                         merge=merge)
             t1 += torch_utils.time_synchronized() - t
 
         # Statistics per image
@@ -133,7 +137,8 @@ def single_gpu_test(model,
             #             img, left_top, right_bottom, color=(0, 0, 255), thickness=2)
             #         label_text = str(_p[5])
             #         label_text += '|{:.02f}'.format(_p[4])
-            #         cv2.putText(img, label_text, (int(_p[0]), int(_p[1]) - 2), cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5,color=(0, 0, 255))
+            #         cv2.putText(img, label_text, (int(_p[0]), int(_p[1]) - 2),
+            #                     cv2.FONT_HERSHEY_COMPLEX, fontScale=0.5,color=(0, 0, 255))
 
             # Append to pycocotools JSON dictionary
             if save_json:

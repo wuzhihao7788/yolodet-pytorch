@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''=================================================
+"""=================================================
 # @Time    : 2020/10/21 10:39
 # @Author  : wuzhihao
 # @email   : 753993117@qq.com
@@ -20,13 +20,21 @@
                 ┗┓┓┏━┳┓┏┛
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
-=================================================='''
-from torch import nn
+=================================================="""
 import torch
+from torch import nn
+
 
 class FocalLoss(nn.Module):
-    # Wraps focal loss around existing loss_fcn(), i.e. criteria = FocalLoss(nn.BCEWithLogitsLoss(), gamma=1.5)
-    def __init__(self, loss_weight=1.0,pos_weight=1.0, gamma=1.5, alpha=0.25,reduction='mean'):
+    # Wraps focal loss around existing loss_fcn(),
+    # i.e. criteria = FocalLoss(nn.BCEWithLogitsLoss(), gamma=1.5)
+    def __init__(self,
+                 loss_weight=1.0,
+                 pos_weight=1.0,
+                 gamma=1.5,
+                 alpha=0.25,
+                 reduction='mean'):
+
         super(FocalLoss, self).__init__()
         self.loss_weight = loss_weight
         self.pos_weight = pos_weight
@@ -43,7 +51,8 @@ class FocalLoss(nn.Module):
         # p_t = torch.exp(-loss)
         # loss *= self.alpha * (1.000001 - p_t) ** self.gamma  # non-zero power for gradient stability
 
-        # TF implementation https://github.com/tensorflow/addons/blob/v0.7.1/tensorflow_addons/losses/focal_loss.py
+        # TF implementation
+        # https://github.com/tensorflow/addons/blob/v0.7.1/tensorflow_addons/losses/focal_loss.py
         pred_prob = torch.sigmoid(pred)  # prob from logits
         p_t = true * pred_prob + (1 - true) * (1 - pred_prob)
         alpha_factor = true * self.alpha + (1 - true) * (1 - self.alpha)
