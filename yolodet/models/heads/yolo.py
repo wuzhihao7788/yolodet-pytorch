@@ -430,17 +430,27 @@ class BaseHead(nn.Module, metaclass=ABCMeta):
         tcls, tbox, indices, ignore_mask, anch = [], [], [], [], []
         ft = torch.cuda.FloatTensor if pred[0].is_cuda else torch.Tensor
         lt = torch.cuda.LongTensor if pred[0].is_cuda else torch.Tensor
-
+        # 循环处理每一层.
         for index, (mask, down_ratio) in enumerate(zip(self.anchor_masks, self.down_ratios)):
             b, a, gj, gi, gxywh = lt([]).to(device), lt([]).to(device), \
                                   lt([]).to(device), lt([]).to(device), ft([]).to(device)
             cls = lt([]).to(device)
-            anchors = np.array(self.anchors, dtype=np.float32)[mask] / down_ratio  # Scale
-            batch_ignore_mask = torch.ones((batch_size, len(mask), int(h / down_ratio),
-                                            int(w / down_ratio), 1)).to(device)  # large object
+            # 负责当前层预测的anchor变换到特征图尺度
+            anchors = np.array(self.anchors, dtype=np.float32)[mask] / down_ratio
+            # batch_ignore_mask.shape = [batch, num_masks, feat_h, feat_w, 1]
+            batch_ignore_mask = torch.ones((batch_size, len(mask),
+                                            int(h / down_ratio),
+                                            int(w / down_ratio), 1)).to(device)
+            # 循环处理每一张图片
             for bs in range(batch_size):
-                xywh = xyxy2xywh(gt_bbox[bs]) if isinstance(gt_bbox[bs], torch.Tensor) \
-                                              else xyxy2xywh(torch.from_numpy(gt_bbox[bs]).to(device))
+
+                if isinstance(gt_bbox[bs], torch.Tensor):
+                    xywh = xyxy2xywh(gt_bbox[bs])
+                else:
+                    gt_bbox[bs] = torch.from_numpy(gt_bbox[bs]).to(device)
+                    xywh = xyxy2xywh(gt_bbox[bs])
+
+                # 如果目标太小, 直接忽略, 不处理.
                 if len(xywh) == 0:
                     continue
 
@@ -449,44 +459,45 @@ class BaseHead(nn.Module, metaclass=ABCMeta):
 
                 ref_anchors = np.zeros((len(all_anchors_grid), 4), dtype=np.float32)
                 ref_anchors[:, 2:] = np.array(all_anchors_grid, dtype=np.float32)
-                ref_anchors = torch.from_numpy(ref_anchors)  # [0,0,anchor_w,anchor_h]
+                ref_anchors = torch.from_numpy(ref_anchors)  # [0,0,anchor_w,anchor_h], 忽略xy位置.
 
-                # x,y ,w, h,Scale
+                # gt变换到特征图尺度
                 gt = xywh * torch.tensor(([grid_w, grid_h, grid_w, grid_h])).to(device).float()
                 score, _cls = gt_score[bs], gt_class[bs]
-
+                # cx_grid, cy_grid表示gt所在网格的位置.
                 cx_grid = gt[:, 0].floor().cpu().numpy()  # grid_x grid_y
                 cy_grid = gt[:, 1].floor().cpu().numpy()  # grid_y
                 n = len(gt)
                 truth_box = torch.zeros(n, 4)
-                truth_box[:n, 2:4] = gt[:n, 2:4]
-                anchor_ious = box_iou(truth_box, ref_anchors)
+                truth_box[:n, 2:4] = gt[:n, 2:4]  # gt
+                anchor_ious = box_iou(truth_box, ref_anchors)  # gt与anchor算iou
 
                 # 返回按行比较最大值的位置
-                best_n_all = anchor_ious.argmax(dim=1)
+                best_n_all = anchor_ious.argmax(dim=1)  # 基于max_iou, 每个gt对应的最佳anchor
                 best_n = best_n_all % 3
                 # 查看是否和当前尺度有最大值得IOU交集,如果有为1,否则为0
                 best_n_mask = ((best_n_all == mask[0])
                                | (best_n_all == mask[1])
                                | (best_n_all == mask[2]))
 
-                # 如果和当前尺度不是最大IOU交集,返回
+                # 如果发现gt与该层负责的anchor不是匹配最佳, 则直接返回, 否则处理那些由该层负责的gt
                 if sum(best_n_mask) == 0:
                     continue
 
                 # cx,cy包含位置和偏移量,整数位代表坐标位置,小数位代表偏移量
                 truth_box[:n, 0:2] = gt[:n, 0:2]
                 single_ignore_mask = np.zeros((len(mask), grid_h, grid_w, 1), dtype=np.float32)
-                # truth框和基本锚框的IOU,含位置信息
+                # truth框和anchor对应的预测框的IOU,含位置信息, pred_ious.shape=[all_anchors, gt]
                 pred_ious = box_iou(pred[index][bs, ..., :4].reshape(-1, 4),
                                     truth_box.reshape(-1, 4).to(device), xyxy=False)
+                # 每个anchor对应的pred_bbox与所有gt的iou的最大值.
                 pred_best_iou, _ = pred_ious.max(dim=1)  # [最大值,索引]
-                # 过滤掉小于阈值的数据,大于阈值1,小于0
+                # 如果大于ignore_thre, 则该anchor为忽略样本, False为负样本.True为忽略样本.
                 pred_best_iou = (pred_best_iou > self.ignore_thre)
-                # 映射到具体位置,是否有目标,1代表有目标物,0代表没有目标物
+                # 映射到具体位置, 同理True为忽略样本, False为负样本.
                 pred_best_iou = pred_best_iou.view(single_ignore_mask.shape)
                 # set mask to zero (ignore) if pred matches truth
-                # 取反,为未包含目标的框位置,1代表没有目标物,0代表有目标物
+                # 取反,single_ignore_mask中True表示负样本, False表示忽略样本.
                 single_ignore_mask = ~ pred_best_iou
 
                 # torch.ones(len(truth_box))[best_n_mask].to(device)
@@ -496,16 +507,16 @@ class BaseHead(nn.Module, metaclass=ABCMeta):
                 gj = torch.cat((gj, torch.from_numpy(cy_grid)[best_n_mask].to(device).long()))
                 gxywh = torch.cat((gxywh, truth_box[best_n_mask].to(device)))
                 cls = torch.cat((cls, torch.from_numpy(_cls)[best_n_mask].to(device).long()))
-                single_ignore_mask[a, gj, gi] = 0
+                single_ignore_mask[a, gj, gi] = 0  # 正样本位置变为False, single_ignore_mask为True的地方为负样本
                 # ignore_mask[gj, gi, a] = 0
                 batch_ignore_mask[bs, :] = single_ignore_mask
 
-            indices.append((b, a, gj, gi))
+            indices.append((b, a, gj, gi))  # indices为正样本下标.
             gxywh[..., :2] = gxywh[..., :2] - gxywh[..., :2].long()
-            tbox.append(gxywh)
-            tcls.append(cls)
-            anch.append(anchors[a.cpu().numpy()])  # anchors
-            ignore_mask.append(batch_ignore_mask)
+            tbox.append(gxywh)  # 正样本回归target
+            tcls.append(cls)    # 正样本分类target
+            anch.append(anchors[a.cpu().numpy()])  # gt对应的anchor.
+            ignore_mask.append(batch_ignore_mask)  # 装着负样本.
 
         return indices, tbox, tcls, anch, ignore_mask
 

@@ -74,9 +74,9 @@ def build_dataloader(dataset,
         DataLoader: A PyTorch dataloader.
     """
     batch_size = data.batch_size // data.subdivisions
-    num_workers = min([os.cpu_count() // data.workers_per_gpu,
-                       batch_size if batch_size > 1 else 0, 8])
-    # num_workers = data.workers_per_gpu
+    # num_workers = min([os.cpu_count() // data.workers_per_gpu,
+    #                    batch_size if batch_size > 1 else 0, 8])
+    num_workers = data.workers_per_gpu
     data_loader = DataLoader(
         dataset,
         batch_size=batch_size,

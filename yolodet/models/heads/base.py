@@ -248,6 +248,9 @@ def soft_nms_cpu(boxes, confs, xyxy=True, nms_thresh=0.3, sigma=0.5, thresh=0.00
     return np.array(keep)
 
 
+
+
+
 def soft_nms_pytorch(dets, box_scores, sigma=0.5, thresh=0.001, cuda=1):
     """
     Build a pytorch implement of Soft NMS algorithm.

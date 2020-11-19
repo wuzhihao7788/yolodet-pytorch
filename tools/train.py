@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''=================================================
+"""=================================================
 # @Time    : 2020/8/10 16:58
 # @Author  : wuzhihao
 # @email   : 753993117@qq.com
@@ -20,7 +20,7 @@
                 ┗┓┓┏━┳┓┏┛
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
-=================================================='''
+=================================================="""
 
 import argparse
 import copy
@@ -104,7 +104,8 @@ def main():
     meta['env_info'] = env_info
     meta['batch_size'] = cfg.data.batch_size
     meta['subdivisions'] = cfg.data.subdivisions
-    meta['multi_scale'] = args.multi_scale
+    # meta['multi_scale'] = args.multi_scale
+    meta['multi_scale'] = True
     # log some basic info
     logger.info('Config:\n{}'.format(cfg.text))
 
