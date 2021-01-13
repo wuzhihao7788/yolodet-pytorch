@@ -21,7 +21,7 @@
                   ┃┫┫  ┃┫┫
                   ┗┻┛  ┗┻┛
 =================================================='''
-from cfg import dataset_test
+from cfg import yolov5_coco_100e
 from yolodet.utils.newInstance_utils import build_from_dict
 
 from yolodet.utils.registry import DATASET
@@ -41,8 +41,19 @@ def draw_box(img, bboxes,class_name,gt_class,gt_score):
             img = cv2.putText(img,class_name[int(ind)]+'|'+str(gt_score[idx]),(b[0], b[1]), font, 0.3, (0, 0, 255), 1)
     return img
 
-dataset = build_from_dict(dataset_test.data['train'],DATASET)
+def filter_pipelines(cfg_dataset,filter=[]):
+  if len(filter)==0:
+      print(f'None type for filter\n')
+      return cfg_dataset
+  pipelines = []
+  for pipeline in cfg_dataset:
+      if pipeline['type'] not in filter:
+          pipelines.append(pipeline)
+  return pipelines
 
+yolov5_coco_100e.data['train']['pipeline'] = filter_pipelines(yolov5_coco_100e.data['train']['pipeline'],\
+                                            ['Normalize','ImageToTensor'])
+dataset = build_from_dict(yolov5_coco_100e.data['train'],DATASET)
 
 for i in range(30):
     result = dataset.__getitem__(i)
