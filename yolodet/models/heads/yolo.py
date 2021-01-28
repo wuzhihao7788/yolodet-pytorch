@@ -272,8 +272,8 @@ class BaseHead(nn.Module,metaclass=ABCMeta):
     def get_yolov5_target(self, pred, img_metas, batch_size, gt_bbox, gt_class, gt_score):
         device = pred[0].device
         gain = torch.ones(6, device=device)  # normalized to gridspace gain
-        ft = torch.cuda.FloatTensor if pred[0].is_cuda else torch.Tensor
-        targets = ft([]).to(device)
+        #ft = torch.cuda.FloatTensor if pred[0].is_cuda else torch.Tensor
+        targets = torch.tensor([],dtype=torch.float32).to(device)#ft([]).to(device)
         for i, gtb in enumerate(gt_bbox):
             gtc = torch.from_numpy(gt_class[i]).to(device)
             img_idx = torch.ones(len(gtb), 1, device=device) * i
