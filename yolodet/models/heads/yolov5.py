@@ -41,7 +41,7 @@ class YOLOv5Head(BaseHead):
         self.depth_multiple = depth_multiple
         self.width_multiple = width_multiple
 
-        self.m = nn.ModuleList(nn.Conv2d(make_divisible(x * self.width_multiple, 8), len(self.anchor_masks) * (self.base_num + self.num_classes), 1) for x in self.in_channels)  # output conv
+        self.m = nn.ModuleList(nn.Conv2d(make_divisible(x * self.width_multiple, 8), len(self.anchor_masks[i]) * (self.base_num + self.num_classes), 1) for (i,x) in enumerate(self.in_channels))  # output conv
 
 
     def forward(self, x):

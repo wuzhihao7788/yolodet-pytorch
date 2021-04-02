@@ -72,7 +72,7 @@ class Custom(Dataset):
                 data = line.split(" ")
                 image = data[0]
                 for i in data[1:]:
-                    truth[image].append([int(j) for j in i.split(',')])
+                    truth[image].append([float(j) for j in i.split(',')])
         return truth
 
     def load_names(self, name_file):

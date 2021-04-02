@@ -42,7 +42,7 @@ model = dict(
         conf_balances=[4, 1, 0.4], #对不同尺度的置信度权重设置[小，中，大]
         bbox_loss=dict(type='IOU_Loss', iou_type='GIOU',loss_weight=0.5),#IOU_loss 支持 IOU CIOU DIOU GIOU
         confidence_loss=dict(type='Conf_Loss',loss_weight=1,pos_weight=1.0),#confidence_loss
-        class_loss=dict(type='Class_Loss',loss_weight=0.5,pos_weight=1.0)#class_loss
+        class_loss=dict(type='Class_Loss',loss_weight=0.5,pos_weight=1.0),#class_loss
         norm_type='BN',#支持BN，GN
         num_groups=None#norm_type=GN 需要给出组大小，通道整数倍
     )
